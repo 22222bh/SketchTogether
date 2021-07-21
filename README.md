@@ -1,3 +1,3 @@
 ## SketchTogether
 
-🙆‍♀️This is Heawon Branch!
+🙆‍♀️This is Haewon Branch!
