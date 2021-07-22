@@ -1,3 +1,3 @@
 # SketchTogether
 
-LEE MISO 🙂
+LeeMiso😊
