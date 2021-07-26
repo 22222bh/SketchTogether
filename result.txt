@@ -1,26 +1,6 @@
-features_hw_2500 PCA 2 KMeans 26.49% 
-features_hw_2500 TSNE 2 KMeans 47.17% 
-features_hw_2500 TSNE 1 KMeans 43.95% 
-features_hw_2500 TSNE 3 KMeans 54.18% 
-features_hw_2500 TSNE 3 BIRCH 47.56% 
-features_hw_2500 TSNE 3 DBSCAN 91.06% 0.5 1 
-features_hw_2500 TSNE 3 DBSCAN 89.32% 0.6 1 
-features_hw_2500 TSNE 3 DBSCAN 87.51% 0.7 1 
-features_hw_2500 TSNE 3 DBSCAN 85.78% 0.8 1 
-features_hw_2500 TSNE 3 DBSCAN 84.06% 0.9 1 
-features_hw_2500 TSNE 3 DBSCAN 82.58% 1 1 
-features_hw_2500 TSNE 3 DBSCAN 80.89% 1.1 1 
-features_hw_2500 TSNE 3 DBSCAN 79.41% 1.2 1 
-features_hw_2500 TSNE 3 DBSCAN 66.87% 1 2
-features_hw_2500 TSNE 3 DBSCAN 55.57% 1 3 
-features_hw_2500 TSNE 3 DBSCAN 42.62% 1 4 
-features_hw_2500 TSNE 3 DBSCAN 68.32% 1.1 2 
-features_hw_2500 TSNE 3 DBSCAN 69.53% 1.2 2 
-features_hw_2500 TSNE 3 DBSCAN 69.86% 1.3 2 
-features_hw_2500 TSNE 3 DBSCAN 69.45% 1.4 2 
-features_hw_2500 TSNE 3 DBSCAN 67.46% 1.5 2 
-features_hw_2500 TSNE 3 DBSCAN 63.41% 1.5 3 
-features_hw_2500 TSNE 3 DBSCAN 58.99% 1.6 2 
-features_hw_2500 TSNE 3 DBSCAN 35.40% 1.7 2 
-features_hw_2500 TSNE 3 DBSCAN 16.14% 2 2 
-features_hw_2500 TSNE 3 DBSCAN 14.72% 2 3 
+features_lee_test_10 TSNE 3 KMeans 10 3.13% 
+features_lee_test_10 TSNE 3 BIRCH 10 18.12% 
+features_lee_test_10 TSNE 3 DBSCAN 1 18.78% 1.3 2 
+features_lee_test_10 TSNE 2 KMeans 10 28.67% 
+features_lee_test_10 TSNE 2 BIRCH 10 31.96% 
+features_lee_test_10 TSNE 2 DBSCAN 86 32.62% 1.3 2 
