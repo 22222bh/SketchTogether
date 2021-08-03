@@ -3,6 +3,7 @@ package edu.skku.sketchdemo;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -21,6 +22,7 @@ import org.tensorflow.lite.support.image.TensorImage;
 import org.tensorflow.lite.support.label.Category;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import edu.skku.sketchdemo.ml.EfficientnetLite4Int82;
@@ -82,10 +84,23 @@ public class MainActivity extends AppCompatActivity {
                     // TODO Handle the exception
                 }
 
-                suggestImage1.setImageResource(R.drawable.image_icon);
-                suggestImage2.setImageResource(R.drawable.image_icon);
-                suggestImage3.setImageResource(R.drawable.image_icon);
-                suggestImage4.setImageResource(R.drawable.image_icon);
+                List<String> suggestedImageList = new ArrayList<String>();
+                suggestedImageList.add("cat_0");
+                suggestedImageList.add("cat_12");
+                suggestedImageList.add("cat_42");
+                suggestedImageList.add("cat_62");
+
+                Resources resources = MainActivity.this.getResources();
+                int resourceId1 = resources.getIdentifier(suggestedImageList.get(0), "drawable", MainActivity.this.getPackageName());
+                int resourceId2 = resources.getIdentifier(suggestedImageList.get(1), "drawable", MainActivity.this.getPackageName());
+                int resourceId3 = resources.getIdentifier(suggestedImageList.get(2), "drawable", MainActivity.this.getPackageName());
+                int resourceId4 = resources.getIdentifier(suggestedImageList.get(3), "drawable", MainActivity.this.getPackageName());
+
+                suggestImage1.setImageResource(resourceId1);
+                suggestImage2.setImageResource(resourceId2);
+                suggestImage3.setImageResource(resourceId3);
+                suggestImage4.setImageResource(resourceId4);
+
             }
         });
     }
