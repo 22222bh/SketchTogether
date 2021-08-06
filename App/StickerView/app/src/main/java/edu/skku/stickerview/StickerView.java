@@ -36,10 +36,8 @@ public class StickerView extends FrameLayout {
   private final boolean showBorder;
   private final boolean bringToFrontCurrentSticker;
 
-  @IntDef({
-      ActionMode.NONE, ActionMode.DRAG, ActionMode.ZOOM_WITH_TWO_FINGER, ActionMode.ICON,
-      ActionMode.CLICK
-  }) @Retention(RetentionPolicy.SOURCE) protected @interface ActionMode {
+  @IntDef({ ActionMode.NONE, ActionMode.DRAG, ActionMode.ZOOM_WITH_TWO_FINGER, ActionMode.ICON, ActionMode.CLICK})
+  @Retention(RetentionPolicy.SOURCE) protected @interface ActionMode {
     int NONE = 0;
     int DRAG = 1;
     int ZOOM_WITH_TWO_FINGER = 2;
@@ -128,17 +126,11 @@ public class StickerView extends FrameLayout {
   }
 
   public void configDefaultIcons() {
-    BitmapStickerIcon deleteIcon = new BitmapStickerIcon(
-        ContextCompat.getDrawable(getContext(), R.drawable.sticker_ic_close_white_18dp),
-        BitmapStickerIcon.LEFT_TOP);
+    BitmapStickerIcon deleteIcon = new BitmapStickerIcon(ContextCompat.getDrawable(getContext(), R.drawable.sticker_ic_close_white_18dp), BitmapStickerIcon.LEFT_TOP);
     deleteIcon.setIconEvent(new DeleteIconEvent());
-    BitmapStickerIcon zoomIcon = new BitmapStickerIcon(
-        ContextCompat.getDrawable(getContext(), R.drawable.sticker_ic_scale_white_18dp),
-        BitmapStickerIcon.RIGHT_BOTTOM);
+    BitmapStickerIcon zoomIcon = new BitmapStickerIcon(ContextCompat.getDrawable(getContext(), R.drawable.sticker_ic_scale_white_18dp), BitmapStickerIcon.RIGHT_BOTTOM);
     zoomIcon.setIconEvent(new ZoomIconEvent());
-    BitmapStickerIcon flipIcon = new BitmapStickerIcon(
-        ContextCompat.getDrawable(getContext(), R.drawable.sticker_ic_flip_white_18dp),
-        BitmapStickerIcon.RIGHT_TOP);
+    BitmapStickerIcon flipIcon = new BitmapStickerIcon(ContextCompat.getDrawable(getContext(), R.drawable.sticker_ic_flip_white_18dp), BitmapStickerIcon.RIGHT_TOP);
     flipIcon.setIconEvent(new FlipHorizontallyEvent());
 
     icons.clear();

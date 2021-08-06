@@ -35,19 +35,9 @@ public class MainActivity extends AppCompatActivity {
         stickerView = findViewById(R.id.stickerView);
         addButton = findViewById(R.id.addButton);
         imageView = findViewById(R.id.tempImageView);
-        Glide.with(this).load(R.drawable.icon_heart).into(imageView);
 
-        BitmapStickerIcon deleteIcon = new BitmapStickerIcon(ContextCompat.getDrawable(this, R.drawable.sticker_ic_close_white_18dp), BitmapStickerIcon.LEFT_TOP);
-        BitmapStickerIcon flipIcon = new BitmapStickerIcon(ContextCompat.getDrawable(this, R.drawable.sticker_ic_flip_white_18dp), BitmapStickerIcon.RIGHT_TOP);
-        BitmapStickerIcon zoomIcon = new BitmapStickerIcon(ContextCompat.getDrawable(this, R.drawable.sticker_ic_scale_white_18dp), BitmapStickerIcon.RIGHT_BOTTOM);
-        deleteIcon.setIconEvent(new DeleteIconEvent());
-        flipIcon.setIconEvent(new FlipVerticallyEvent());
-        zoomIcon.setIconEvent(new ZoomIconEvent());
-        List<BitmapStickerIcon> iconList = new ArrayList<BitmapStickerIcon>();
-        iconList.add(deleteIcon);
-        iconList.add(flipIcon);
-        iconList.add(zoomIcon);
-        stickerView.setIcons(iconList);
+        // loadSticker()에서 스티커 이미지를 getDrawable()로 가져오면 OOM 에러가 생겨 Glide로 우회
+        Glide.with(this).load(R.drawable.icon_heart).into(imageView);
 
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,9 +45,9 @@ public class MainActivity extends AppCompatActivity {
                 loadSticker();
             }
         });
-
     }
 
+    // 스티커뷰에서 스티커 추가
     protected void loadSticker(){
         Drawable drawable = imageView.getDrawable();
         DrawableSticker drawableSticker = new DrawableSticker(drawable);
@@ -65,4 +55,3 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
-
