@@ -19,13 +19,16 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 
 import org.tensorflow.lite.support.image.TensorImage;
-import org.tensorflow.lite.support.label.Category;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import edu.skku.sketchdemo.ml.EfficientnetLite4Int82;
+import smile.TSNE;
+
+import edu.skku.sketchdemo.ml.EffiExtractor;
 
 public class MainActivity extends AppCompatActivity {
     private final int GET_IMAGE_FOR_GALLERYVIEW = 201;
@@ -63,26 +66,29 @@ public class MainActivity extends AppCompatActivity {
                 Drawable galleryImageDrawable = galleryImage.getDrawable();
                 galleryImageBmp = ((BitmapDrawable)galleryImageDrawable).getBitmap();
                 Bitmap galleryImageBmpResized = Bitmap.createScaledBitmap(galleryImageBmp, 300, 300, false);
-                try {
-                    EfficientnetLite4Int82 model = EfficientnetLite4Int82.newInstance(MainActivity.this);
-                    TensorImage image = TensorImage.fromBitmap(galleryImageBmpResized);
-                    EfficientnetLite4Int82.Outputs outputs = model.process(image);
-                    List<Category> probability = outputs.getProbabilityAsCategoryList();
 
-                    double maxScore = 0;
-                    int maxScoreIndex = 0;
-                    for (int i = 0; i < 1000; i++) {
-                        if (probability.get(i).getScore() > maxScore) {
-                            maxScore = probability.get(i).getScore();
-                            maxScoreIndex = i;
-                        }
-                    }
-                    suggestButton.setText(probability.get(maxScoreIndex).getLabel());
+                try {
+                    EffiExtractor model = EffiExtractor.newInstance(MainActivity.this);
+
+                    // Creates inputs for reference.
+                    TensorImage image = TensorImage.fromBitmap(galleryImageBmpResized);
+
+                    // Runs model inference and gets result.
+                    EffiExtractor.Outputs outputs = model.process(image);
+                    TensorBuffer feature = outputs.getFeatureAsTensorBuffer();
+                    // System.out.println("feature : " + Arrays.toString(feature.getFloatArray()));
+
+                    double[][] tempFeature = {{0, 0, 1}, {0, 1, 0}, {1, 0, 0}};
+
+                    TSNE tsne = new TSNE(tempFeature, 2);
+                    System.out.println("feature : " + Arrays.deepToString(tsne.coordinates));
 
                     model.close();
+
                 } catch (IOException e) {
-                    // TODO Handle the exception
+                    e.printStackTrace();
                 }
+
 
                 List<String> suggestedImageList = new ArrayList<String>();
                 suggestedImageList.add("cat_0");
@@ -113,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (resultCode == RESULT_OK && data != null && data.getData() != null) {
             selectedImageUri = data.getData();
-            // Glide.with(getApplicationContext()).load(selectedImageUri).apply(option1).into(galleryImage);
             Glide.with(getApplicationContext()).asBitmap().load(selectedImageUri).into(new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
