@@ -21,9 +21,10 @@ import com.bumptech.glide.request.transition.Transition;
 import org.tensorflow.lite.support.image.TensorImage;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import smile.TSNE;
@@ -51,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
         suggestButton = findViewById(R.id.suggestButton);
         suggestButton.setVisibility(View.INVISIBLE);
 
+        Classifier classifier = new Classifier();
+        loadData();
+
         galleryImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -66,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 Drawable galleryImageDrawable = galleryImage.getDrawable();
                 galleryImageBmp = ((BitmapDrawable)galleryImageDrawable).getBitmap();
                 Bitmap galleryImageBmpResized = Bitmap.createScaledBitmap(galleryImageBmp, 300, 300, false);
+                List<String> suggestedImageList = new ArrayList<String>();
 
                 try {
                     EffiExtractor model = EffiExtractor.newInstance(MainActivity.this);
@@ -75,26 +80,39 @@ public class MainActivity extends AppCompatActivity {
 
                     // Runs model inference and gets result.
                     EffiExtractor.Outputs outputs = model.process(image);
-                    TensorBuffer feature = outputs.getFeatureAsTensorBuffer();
-                    // System.out.println("feature : " + Arrays.toString(feature.getFloatArray()));
-
-                    double[][] tempFeature = {{0, 0, 1}, {0, 1, 0}, {1, 0, 0}};
-
-                    TSNE tsne = new TSNE(tempFeature, 2);
-                    System.out.println("feature : " + Arrays.deepToString(tsne.coordinates));
-
+                    TensorBuffer newFeatureTmp = outputs.getFeatureAsTensorBuffer();
+                    double[] newFeature = newFeatureTmp.getFloatArray();
+                    featureSet[featureNum] = newFeature; // newFeature를 어레이로 바꾼 것
                     model.close();
+
+                    TSNE tsne = new TSNE(featureSet, 2);
+                    int idx = 0;
+                    for (int i = 0; i<featureNum+1; i++) {
+                        double x = tsne[i][0];
+                        double y = tsne[i][1];
+                        listDataPointOriginal[idx].setX(x);
+                        listDataPoint[idx++].setY(y);
+                    }
+                    // 이제 listDataPoint에 newfeature까지 다 들어있음
+
+                    int distIdx = 0; // 일단은 유클리드
+                    DistanceAlgorithm distanceAlgorithm = distanceAlgorithms[distIdx];
+                    // if (distanceAlgorithm instanceof MinkowskiDistance){
+                    //     int p = bundle.getInt(Constants.MINKOWSKI_P);
+                    //     ((MinkowskiDistance)distanceAlgorithm).setP(p);
+                    // }
+
+                    classifier.reset();
+                    classifier.setDistanceAlgorithm(distanceAlgorithms[distIdx]);
+                    classifier.setListDataPoint(listDataPoint);
+
+
+                    DataPoint newFeature = featureSet[featureNum];
+                    suggestedImageList = classifier.classify(newFeature)
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
-                List<String> suggestedImageList = new ArrayList<String>();
-                suggestedImageList.add("cat_0");
-                suggestedImageList.add("cat_12");
-                suggestedImageList.add("cat_42");
-                suggestedImageList.add("cat_62");
 
                 Resources resources = MainActivity.this.getResources();
                 int resourceId1 = resources.getIdentifier(suggestedImageList.get(0), "drawable", MainActivity.this.getPackageName());
@@ -130,6 +148,42 @@ public class MainActivity extends AppCompatActivity {
             suggestImage2.setImageResource(0);
             suggestImage3.setImageResource(0);
             suggestImage4.setImageResource(0);
+        }
+    }
+
+    public void loadData() { // 이거를 최초 1회만 하게 해야 함!!!
+        try {
+            dataSetFile = "path to data set";
+            int idx = 0;
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open
+                    (dataSetFile))); // 1. 안닫아도 되는지 2. 메모리 해제는?
+            String line;
+            while ((line = bufferedReader.readLine()) != null){
+                String[] data = line.split(" "); // 일단은 공백으로 구분되어 있다고 가정.
+                double value;
+                for (int i = 0; i< featureLen; i++) {
+                    value = Double.parseDouble(data[i]);
+                    featuerSet[idx][i] = value;
+                }
+                idx++;
+            }
+
+            fileNameFile = "path to filename";
+            BufferedReader fileNameReader = new BufferedReader(new InputStreamReader(getAssets().open(fileNameFile))); // 1. 안닫아도 되는지 2. 메모리 해제는?
+            String line, filename;
+            DataPoint dataPoint;
+            while ((line = fileNameReader.readLine()) != null){
+                filename = line
+                DataPoint dataPoint = new DataPoint(0, 0, filename);
+                listDataPointOriginal.add(dataPoint);
+                listDataPoint.add(dataPoint);
+            }
+            dataPoint = new DataPoint(0, 0, "input_image");
+            listDataPointOriginal.add(dataPoint);
+            listDataPoint.add(dataPoint);
+        } catch (Exception exception){
+            exception.printStackTrace();
         }
     }
 }
