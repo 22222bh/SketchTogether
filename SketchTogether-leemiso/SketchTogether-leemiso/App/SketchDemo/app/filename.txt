@@ -1,0 +1,11 @@
+circle
+cloud
+ear
+eye
+flower
+house
+moustache
+mouth
+nose
+tree
+triangle
