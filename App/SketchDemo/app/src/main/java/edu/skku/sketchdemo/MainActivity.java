@@ -81,34 +81,32 @@ public class MainActivity extends AppCompatActivity {
                     // Runs model inference and gets result.
                     EffiExtractor.Outputs outputs = model.process(image);
                     TensorBuffer newFeatureTmp = outputs.getFeatureAsTensorBuffer();
-                    double[] newFeature = newFeatureTmp.getFloatArray();
-                    featureSet[featureNum] = newFeature; // newFeature를 어레이로 바꾼 것
+                    float[] tempNewFeature = newFeatureTmp.getFloatArray();
+                    double[] newFeature = new double[1280];
+                    for (int i = 0; i < 1280; i++) {
+                        newFeature[i] = tempNewFeature[i];
+                    }
+                    int featureNum = classifier.getFeatureNum();
+                    classifier.setFeatureSetRow(newFeature, featureNum); // newFeature를 어레이로 바꾼 것
                     model.close();
 
-                    TSNE tsne = new TSNE(featureSet, 2);
+                    TSNE tsne = new TSNE(classifier.getFeatureSet(), 2);
                     int idx = 0;
-                    for (int i = 0; i<featureNum+1; i++) {
-                        double x = tsne[i][0];
-                        double y = tsne[i][1];
-                        listDataPointOriginal[idx].setX(x);
-                        listDataPoint[idx++].setY(y);
+                    for (int i = 0; i < featureNum + 1; i++) {
+                        double x = tsne.coordinates[i][0];
+                        double y = tsne.coordinates[i][1];
+                        // listDataPointOriginal[idx].setX(x);
+                        // listDataPoint[idx++].setY(y);
                     }
                     // 이제 listDataPoint에 newfeature까지 다 들어있음
 
                     int distIdx = 0; // 일단은 유클리드
-                    DistanceAlgorithm distanceAlgorithm = distanceAlgorithms[distIdx];
-                    // if (distanceAlgorithm instanceof MinkowskiDistance){
-                    //     int p = bundle.getInt(Constants.MINKOWSKI_P);
-                    //     ((MinkowskiDistance)distanceAlgorithm).setP(p);
-                    // }
 
-                    classifier.reset();
-                    classifier.setDistanceAlgorithm(distanceAlgorithms[distIdx]);
-                    classifier.setListDataPoint(listDataPoint);
+                    // classifier.reset();
+                    // classifier.setListDataPoint(listDataPoint);
 
-
-                    DataPoint newFeature = featureSet[featureNum];
-                    suggestedImageList = classifier.classify(newFeature)
+                    DataPoint newGeneratedFeature = classifier.getFeatureSetRow(featureNum);
+                    suggestedImageList = classifier.classify(newFeature);
 
                 } catch (IOException e) {
                     e.printStackTrace();
