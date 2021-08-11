@@ -14,7 +14,7 @@ public class Classifier {
     private int featureLen = 1280;
     private int featureNum = 598; // TODO
 
-    public List<DataPoint> listDataPoint;
+    public ArrayList<DataPoint> listDataPoint;
     private List<DataPoint> listTestData;
     private List<DataPoint> listTestValidator;
     private List<String> listNeighbors;
@@ -26,10 +26,11 @@ public class Classifier {
         listDataPoint = new ArrayList<>();
         listTestData = new ArrayList<>();
         listTestValidator = new ArrayList<>();
+        listNeighbors = new ArrayList<>();
         featureSet = new double[featureNum + 1][featureLen];
     }
 
-    private List<String> classify(DataPoint point){ // 외부에서 들어옴.
+    public List<String> classify(DataPoint point){
         HashMap<String, Integer> hashMap = new HashMap<>(); // 초기 용량 지정 가능!!! 나중에 전체 개수 정해지면 초기용량 ㄱㄱ
         List<DataInfo> listDistance = calculateDistances(point);
         for (int i = 0; i < K; i++){
@@ -41,7 +42,8 @@ public class Classifier {
                     minIndex = j;
                 }
             }
-            String nn = listDataPoint.get(minIndex).getFilename();
+            String nn = listDistance.get(minIndex).getFilename();
+
             listNeighbors.add(nn);
             DataInfo tempDataInfo = new DataInfo(null, Double.MAX_VALUE);
             listDistance.set(minIndex, tempDataInfo); // 제일 가까운 애를 맥스로 갱신 - 다음 번에는 얘는 자연스럽게 제외됨.
@@ -110,9 +112,17 @@ public class Classifier {
         this.listDataPoint.clear();
         this.listDataPoint.addAll(listDataPoint);
     }
+    public void setListDataPointElement(int idx, double x, double y) {
+        DataPoint dp = getListDataPointElement(idx);
+        dp.setX(x);
+        dp.setY(y);
+    }
 
     public void setListDataPointElement(DataPoint point) {
         this.listDataPoint.add(point);
+    }
+    public DataPoint getListDataPointElement(int idx) {
+        return this.listDataPoint.get(idx);
     }
 
     public List<DataPoint> getListTestValidator() { return listTestValidator; }

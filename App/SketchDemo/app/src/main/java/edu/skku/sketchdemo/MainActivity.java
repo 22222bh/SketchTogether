@@ -27,9 +27,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import smile.TSNE;
-
 import edu.skku.sketchdemo.ml.EffiExtractor;
+import smile.TSNE;
 
 public class MainActivity extends AppCompatActivity {
     private final int GET_IMAGE_FOR_GALLERYVIEW = 201;
@@ -40,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageView suggestImage4;
     private Button suggestButton;
     private Bitmap galleryImageBmp;
+    private Classifier classifier;
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         galleryImage = findViewById(R.id.galleryImageView);
@@ -52,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         suggestButton = findViewById(R.id.suggestButton);
         suggestButton.setVisibility(View.INVISIBLE);
 
-        Classifier classifier = new Classifier();
+        classifier = new Classifier();
         loadData();
 
         galleryImage.setOnClickListener(new View.OnClickListener() {
@@ -74,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     EffiExtractor model = EffiExtractor.newInstance(MainActivity.this);
-
                     // Creates inputs for reference.
                     TensorImage image = TensorImage.fromBitmap(galleryImageBmpResized);
 
@@ -90,18 +88,19 @@ public class MainActivity extends AppCompatActivity {
                     int featureNum = classifier.getFeatureNum();
                     classifier.setFeatureSetRow(newFeature, featureNum); // newFeature를 어레이로 바꾼 것
                     model.close();
-
                     TSNE tsne = new TSNE(classifier.getFeatureSet(), 2);
                     int idx = 0;
                     for (int i = 0; i < featureNum + 1; i++) {
                         double x = tsne.coordinates[i][0];
                         double y = tsne.coordinates[i][1];
-                        listDataPoint[idx].setX(x);
-                        listDataPoint[idx++].setY(y);
+                        classifier.setListDataPointElement(i, x, y);
                     }
-                    // 이제 listDataPoint에 newfeature까지 다 들어있음
 
-                    DataPoint newGeneratedFeature = listDataPoint[featureNum]; // r = double[] l = Datapoint
+
+
+                    // 이제 listDataPoint에 newfeature까지 다 들어있음
+                    DataPoint newGeneratedFeature = classifier.listDataPoint.get(featureNum);
+
                     suggestedImageList = classifier.classify(newGeneratedFeature);
 
                 } catch (IOException e) {
@@ -109,10 +108,10 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 Resources resources = MainActivity.this.getResources();
-                int resourceId1 = resources.getIdentifier(suggestedImageList.get(0), "drawable", MainActivity.this.getPackageName());
-                int resourceId2 = resources.getIdentifier(suggestedImageList.get(1), "drawable", MainActivity.this.getPackageName());
-                int resourceId3 = resources.getIdentifier(suggestedImageList.get(2), "drawable", MainActivity.this.getPackageName());
-                int resourceId4 = resources.getIdentifier(suggestedImageList.get(3), "drawable", MainActivity.this.getPackageName());
+                int resourceId1 = resources.getIdentifier(suggestedImageList.get(1), "drawable", MainActivity.this.getPackageName());
+                int resourceId2 = resources.getIdentifier(suggestedImageList.get(2), "drawable", MainActivity.this.getPackageName());
+                int resourceId3 = resources.getIdentifier(suggestedImageList.get(3), "drawable", MainActivity.this.getPackageName());
+                int resourceId4 = resources.getIdentifier(suggestedImageList.get(4), "drawable", MainActivity.this.getPackageName());
 
                 suggestImage1.setImageResource(resourceId1);
                 suggestImage2.setImageResource(resourceId2);
@@ -147,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void loadData() { // 이거를 최초 1회만 하게 해야 함!!!
         try {
-            String dataSetFile = "path to data set";
+            String dataSetFile = "features.csv";
             int idx = 0;
             int featureLen = classifier.getFeatureLen();
 
@@ -164,15 +163,17 @@ public class MainActivity extends AppCompatActivity {
                 idx++;
             }
 
-            String fileNameFile = "path to filename";
+            String fileNameFile = "filename.txt";
             BufferedReader fileNameReader = new BufferedReader(new InputStreamReader(getAssets().open(fileNameFile))); // 1. 안닫아도 되는지 2. 메모리 해제는?
-            String line, filename;
+
+            String filename;
             DataPoint dataPoint;
+            int i = 0;
             while ((line = fileNameReader.readLine()) != null){
                 filename = line;
-                DataPoint dataPoint = new DataPoint(0, 0, filename);
+                dataPoint = new DataPoint(0, 0, filename);
+
                 // listDataPointOriginal.add(dataPoint);
-                listDataPoint.add(dataPoint);
                 classifier.setListDataPointElement(dataPoint);
             }
             dataPoint = new DataPoint(0, 0, "input_image");
