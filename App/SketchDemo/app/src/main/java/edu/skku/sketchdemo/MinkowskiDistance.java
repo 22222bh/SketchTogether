@@ -1,6 +1,6 @@
 package edu.skku.sketchdemo;
 
-public class MinkowskiDistance implements DistanceAlgorithm {
+public class MinkowskiDistance{
 
     private int p;
 
@@ -16,7 +16,6 @@ public class MinkowskiDistance implements DistanceAlgorithm {
         this.p = p;
     }
 
-    @Override
     public double calculateDistance(double x1, double y1, double x2, double y2) {
         double x = Math.pow(x1 - x2, p);
         double y = Math.pow(y1 - y2, p);

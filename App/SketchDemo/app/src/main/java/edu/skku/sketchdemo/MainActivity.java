@@ -27,9 +27,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import smile.TSNE;
-
 import edu.skku.sketchdemo.ml.EffiExtractor;
+import smile.TSNE;
 
 public class MainActivity extends AppCompatActivity {
     private final int GET_IMAGE_FOR_GALLERYVIEW = 201;
@@ -40,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageView suggestImage4;
     private Button suggestButton;
     private Bitmap galleryImageBmp;
+    private Classifier classifier;
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         galleryImage = findViewById(R.id.galleryImageView);
@@ -52,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         suggestButton = findViewById(R.id.suggestButton);
         suggestButton.setVisibility(View.INVISIBLE);
 
-        Classifier classifier = new Classifier();
+        classifier = new Classifier();
         loadData();
 
         galleryImage.setOnClickListener(new View.OnClickListener() {
@@ -69,54 +68,42 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Drawable galleryImageDrawable = galleryImage.getDrawable();
                 galleryImageBmp = ((BitmapDrawable)galleryImageDrawable).getBitmap();
-                Bitmap galleryImageBmpResized = Bitmap.createScaledBitmap(galleryImageBmp, 300, 300, false);
+                Bitmap galleryImageBmpResized = Bitmap.createScaledBitmap(galleryImageBmp, 224, 224, false);
                 List<String> suggestedImageList = new ArrayList<String>();
 
                 try {
                     EffiExtractor model = EffiExtractor.newInstance(MainActivity.this);
-
-                    // Creates inputs for reference.
                     TensorImage image = TensorImage.fromBitmap(galleryImageBmpResized);
-
-                    // Runs model inference and gets result.
                     EffiExtractor.Outputs outputs = model.process(image);
-                    TensorBuffer newFeatureTmp = outputs.getFeatureAsTensorBuffer();
-                    float[] tempNewFeature = newFeatureTmp.getFloatArray();
-                    double[] newFeature = new double[1280];
-                    for (int i = 0; i < 1280; i++) {
-                        newFeature[i] = tempNewFeature[i];
-                    }
-                    int featureNum = classifier.getFeatureNum();
-                    classifier.setFeatureSetRow(newFeature, featureNum); // newFeature를 어레이로 바꾼 것
+                    TensorBuffer galleryImageTensorBuffer = outputs.getFeatureAsTensorBuffer();
                     model.close();
 
-                    TSNE tsne = new TSNE(classifier.getFeatureSet(), 2);
-                    int idx = 0;
+                    // change data type for tsne
+                    float[] floatGalleryImageFeatures = galleryImageTensorBuffer.getFloatArray();
+                    double[] galleryImageFeatures = new double[1280];
+                    for (int i = 0; i < 1280; i++) {
+                        galleryImageFeatures[i] = floatGalleryImageFeatures[i];
+                    }
+                    int featureNum = classifier.getFeatureNum();
+                    classifier.setFeatureSetRow(galleryImageFeatures, featureNum);
+
+                    TSNE tsne = new TSNE(classifier.getFeatureSet(), 3);
                     for (int i = 0; i < featureNum + 1; i++) {
                         double x = tsne.coordinates[i][0];
                         double y = tsne.coordinates[i][1];
-                        // listDataPointOriginal[idx].setX(x);
-                        // listDataPoint[idx++].setY(y);
+                        classifier.setDataPointListElement(i, x, y);
                     }
-                    // 이제 listDataPoint에 newfeature까지 다 들어있음
-
-                    int distIdx = 0; // 일단은 유클리드
-
-                    // classifier.reset();
-                    // classifier.setListDataPoint(listDataPoint);
-
-                    DataPoint newGeneratedFeature = classifier.getFeatureSetRow(featureNum);
-                    suggestedImageList = classifier.classify(newFeature);
-
+                    DataPoint galleryImageDataPoint = classifier.dataPointList.get(featureNum); // get last one (= gallery image)
+                    suggestedImageList = classifier.classify(galleryImageDataPoint);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
                 Resources resources = MainActivity.this.getResources();
-                int resourceId1 = resources.getIdentifier(suggestedImageList.get(0), "drawable", MainActivity.this.getPackageName());
-                int resourceId2 = resources.getIdentifier(suggestedImageList.get(1), "drawable", MainActivity.this.getPackageName());
-                int resourceId3 = resources.getIdentifier(suggestedImageList.get(2), "drawable", MainActivity.this.getPackageName());
-                int resourceId4 = resources.getIdentifier(suggestedImageList.get(3), "drawable", MainActivity.this.getPackageName());
+                int resourceId1 = resources.getIdentifier(suggestedImageList.get(1), "drawable", MainActivity.this.getPackageName());
+                int resourceId2 = resources.getIdentifier(suggestedImageList.get(2), "drawable", MainActivity.this.getPackageName());
+                int resourceId3 = resources.getIdentifier(suggestedImageList.get(3), "drawable", MainActivity.this.getPackageName());
+                int resourceId4 = resources.getIdentifier(suggestedImageList.get(4), "drawable", MainActivity.this.getPackageName());
 
                 suggestImage1.setImageResource(resourceId1);
                 suggestImage2.setImageResource(resourceId2);
@@ -149,37 +136,37 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void loadData() { // 이거를 최초 1회만 하게 해야 함!!!
+    public void loadData() {
         try {
-            dataSetFile = "path to data set";
+            String dataSetFile = "features.csv";
             int idx = 0;
+            int featureLen = classifier.getFeatureLen();
 
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open
-                    (dataSetFile))); // 1. 안닫아도 되는지 2. 메모리 해제는?
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open(dataSetFile)));
             String line;
             while ((line = bufferedReader.readLine()) != null){
-                String[] data = line.split(" "); // 일단은 공백으로 구분되어 있다고 가정.
+                String[] data = line.split(",");
                 double value;
-                for (int i = 0; i< featureLen; i++) {
+                for (int i = 0; i < featureLen; i++) {
                     value = Double.parseDouble(data[i]);
-                    featuerSet[idx][i] = value;
+                    classifier.setFeatureSetElement(value, idx, i);
                 }
                 idx++;
             }
 
-            fileNameFile = "path to filename";
-            BufferedReader fileNameReader = new BufferedReader(new InputStreamReader(getAssets().open(fileNameFile))); // 1. 안닫아도 되는지 2. 메모리 해제는?
-            String line, filename;
+            String fileNameFile = "filename.txt";
+            BufferedReader fileNameReader = new BufferedReader(new InputStreamReader(getAssets().open(fileNameFile)));
+
+            String filename;
             DataPoint dataPoint;
+            int i = 0;
             while ((line = fileNameReader.readLine()) != null){
-                filename = line
-                DataPoint dataPoint = new DataPoint(0, 0, filename);
-                listDataPointOriginal.add(dataPoint);
-                listDataPoint.add(dataPoint);
+                filename = line;
+                dataPoint = new DataPoint(0, 0, filename);
+                classifier.setDataPointListElement(dataPoint);
             }
-            dataPoint = new DataPoint(0, 0, "input_image");
-            listDataPointOriginal.add(dataPoint);
-            listDataPoint.add(dataPoint);
+            dataPoint = new DataPoint(0, 0, "galleryImage");
+            classifier.setDataPointListElement(dataPoint);
         } catch (Exception exception){
             exception.printStackTrace();
         }

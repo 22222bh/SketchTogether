@@ -1,5 +1,8 @@
 package edu.skku.sketchdemo;
 
+/**
+ * 2d data feature
+ * */
 public class DataPoint {
 
     private double x;
