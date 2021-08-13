@@ -91,10 +91,12 @@ public class MainActivity extends AppCompatActivity {
                     for (int i = 0; i < featureNum + 1; i++) {
                         double x = tsne.coordinates[i][0];
                         double y = tsne.coordinates[i][1];
+                        double z = tsne.coordinates[i][2];
                         classifier.setDataPointListElement(i, x, y);
                     }
-                    DataPoint galleryImageDataPoint = classifier.dataPointList.get(featureNum); // get last one (= gallery image)
-                    suggestedImageList = classifier.classify(galleryImageDataPoint);
+
+                    DataPoint lastDataPoint = classifier.dataPointList.get(featureNum); // get last one (!= gallery image......)
+                    suggestedImageList = classifier.classify(lastDataPoint);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -162,10 +164,10 @@ public class MainActivity extends AppCompatActivity {
             int i = 0;
             while ((line = fileNameReader.readLine()) != null){
                 filename = line;
-                dataPoint = new DataPoint(0, 0, filename);
+                dataPoint = new DataPoint(0, 0, 0, filename);
                 classifier.setDataPointListElement(dataPoint);
             }
-            dataPoint = new DataPoint(0, 0, "galleryImage");
+            dataPoint = new DataPoint(0, 0, 0, "galleryImage");
             classifier.setDataPointListElement(dataPoint);
         } catch (Exception exception){
             exception.printStackTrace();

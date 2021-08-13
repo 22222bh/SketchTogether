@@ -41,7 +41,6 @@ import smile.stat.distribution.GaussianDistribution;
  *     9(Nov):2579-2605, 2008. </li>
  * </ol>
  *
- * @see UMAP
  *
  * @author Haifeng Li
  */

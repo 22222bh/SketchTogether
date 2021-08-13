@@ -10,7 +10,7 @@ public class Classifier {
     private double splitRatio;
     private double accuracy = 0;
     private int featureLen = 1280;
-    private int featureNum = 598; // TODO
+    private int featureNum = 598;
 
     public ArrayList<DataPoint> dataPointList;
     private List<String> neighborList;
@@ -26,6 +26,7 @@ public class Classifier {
 
     public List<String> classify(DataPoint point){
         HashMap<String, Integer> hashMap = new HashMap<>(); // 초기 용량 지정 가능!!! 나중에 전체 개수 정해지면 초기용량 ㄱㄱ
+        neighborList.clear();
         List<DataInfo> distanceList = calculateDistances(point);
         List<Double> minDistanceList = new ArrayList<>();
         int distanceListLen = distanceList.size();
@@ -52,7 +53,7 @@ public class Classifier {
     private List<DataInfo> calculateDistances(DataPoint point){
         List<DataInfo> distanceList = new ArrayList<>();
         for (DataPoint dataPoint: dataPointList){
-            double distance = this.calculateEuclideanDistance(point.getX(), point.getY(), dataPoint.getX(), dataPoint.getY());
+            double distance = this.calculateEuclideanDistance(point.getX(), point.getY(), point.getZ(), dataPoint.getX(), dataPoint.getY(), dataPoint.getZ());
             String filename = dataPoint.getFilename();
             DataInfo dataInfo = new DataInfo(filename, distance);
             distanceList.add(dataInfo);
@@ -60,10 +61,11 @@ public class Classifier {
         return distanceList;
     }
 
-    public double calculateEuclideanDistance(double x1, double y1, double x2, double y2) {
+    public double calculateEuclideanDistance(double x1, double y1, double z1, double x2, double y2, double z2) {
         double xSquare = Math.pow(x1 - x2, 2);
         double ySquare = Math.pow(y1 - y2, 2);
-        double distance = Math.sqrt(xSquare + ySquare);
+        double zSquare = Math.pow(z1 - z2, 2);
+        double distance = Math.sqrt(xSquare + ySquare + zSquare);
         return distance;
     }
 
