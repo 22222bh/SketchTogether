@@ -2721,7 +2721,7 @@ public class MathEx {
     }
 
     /**
-     * Returns the pairwise distance matrix of multiple binary sparse vectors.
+     * Returns the pairwise distance matrix dof multiple binary sparse vectors.
      * @param x binary sparse vectors, which are the indices of
      *          nonzero elements in ascending order.
      * @param squared If true, compute the squared Euclidean distance.

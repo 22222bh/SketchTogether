@@ -29,6 +29,7 @@ import java.util.List;
 
 import edu.skku.sketchdemo.ml.EffiExtractor;
 import smile.TSNE;
+import smile.feature.extraction.PCA;
 
 public class MainActivity extends AppCompatActivity {
     private final int GET_IMAGE_FOR_GALLERYVIEW = 201;
@@ -78,11 +79,10 @@ public class MainActivity extends AppCompatActivity {
                     TensorBuffer galleryImageTensorBuffer = outputs.getFeatureAsTensorBuffer();
                     model.close();
 
-                    // change data type for tsne
                     float[] floatGalleryImageFeatures = galleryImageTensorBuffer.getFloatArray();
                     double[] galleryImageFeatures = new double[1280];
                     for (int i = 0; i < 1280; i++) {
-                        galleryImageFeatures[i] = floatGalleryImageFeatures[i];
+                        galleryImageFeatures[i] = floatGalleryImageFeatures[i]; // change data type for tsne
                     }
                     int featureNum = classifier.getFeatureNum();
                     classifier.setFeatureSetRow(galleryImageFeatures, featureNum);
@@ -92,10 +92,22 @@ public class MainActivity extends AppCompatActivity {
                         double x = tsne.coordinates[i][0];
                         double y = tsne.coordinates[i][1];
                         double z = tsne.coordinates[i][2];
-                        classifier.setDataPointListElement(i, x, y);
+                        classifier.setDataPointListElement(i, x, y, z);
                     }
 
-                    DataPoint lastDataPoint = classifier.dataPointList.get(featureNum); // get last one (!= gallery image......)
+                    /*
+                    PCA pca = PCA.fit(classifier.getFeatureSet());
+                    pca.setProjection(2);
+                    double[][] pcaFeatureSet = pca.project(classifier.getFeatureSet());
+                    for (int i = 0; i < featureNum + 1; i++) {
+                        double x = pcaFeatureSet[i][0];
+                        double y = pcaFeatureSet[i][1];
+                        double z = 0;
+                        classifier.setDataPointListElement(i, x, y, z);
+                    }
+                    */
+
+                    DataPoint lastDataPoint = classifier.dataPointList.get(featureNum);
                     suggestedImageList = classifier.classify(lastDataPoint);
                 } catch (IOException e) {
                     e.printStackTrace();

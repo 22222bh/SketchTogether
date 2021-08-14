@@ -25,7 +25,7 @@ public class Classifier {
     }
 
     public List<String> classify(DataPoint point){
-        HashMap<String, Integer> hashMap = new HashMap<>(); // 초기 용량 지정 가능!!! 나중에 전체 개수 정해지면 초기용량 ㄱㄱ
+        HashMap<String, Integer> hashMap = new HashMap<>();
         neighborList.clear();
         List<DataInfo> distanceList = calculateDistances(point);
         List<Double> minDistanceList = new ArrayList<>();
@@ -112,10 +112,11 @@ public class Classifier {
         this.dataPointList.clear();
         this.dataPointList.addAll(dataPointList);
     }
-    public void setDataPointListElement(int idx, double x, double y) {
+    public void setDataPointListElement(int idx, double x, double y, double z) {
         DataPoint dp = getListDataPointElement(idx);
         dp.setX(x);
         dp.setY(y);
+        dp.setZ(z);
     }
 
     public void setDataPointListElement(DataPoint point) {
@@ -125,9 +126,7 @@ public class Classifier {
         return this.dataPointList.get(idx);
     }
 
-    public List<String> getListNeighbors() {
-        return neighborList;
-    }
+    public List<String> getListNeighbors() { return neighborList; }
 
     public void setListNeighbors(List<String> listNeighbors) {
         this.neighborList.clear();
