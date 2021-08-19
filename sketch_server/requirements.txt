@@ -1,0 +1,4 @@
+efficientnet_torch
+sklearn
+tqdm
+torchvision
