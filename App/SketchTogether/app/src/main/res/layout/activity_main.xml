@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <edu.skku.sketchtogether.StickerView
+        android:id="@+id/stickerView"
+        android:layout_width="800dp"
+        android:layout_height="540dp"
+        android:background="@color/light_gray"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/buttonLinearLayout">
+    </edu.skku.sketchtogether.StickerView>
+
+    <LinearLayout
+        android:id="@+id/buttonLinearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/stickerView"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/checkButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:src="@drawable/icon_check"
+            app:fabSize="normal"
+            app:backgroundTint="@color/gray">
+        </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/penButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:src="@drawable/icon_pen"
+            app:fabSize="normal"
+            app:backgroundTint="@color/gray">
+        </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/eraserButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:src="@drawable/icon_eraser"
+            app:fabSize="normal"
+            app:backgroundTint="@color/gray">
+        </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/cursorButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:src="@drawable/icon_cursor"
+            app:fabSize="normal"
+            app:backgroundTint="@color/gray">
+        </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/suggestButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:src="@drawable/icon_star"
+            app:fabSize="normal"
+            app:backgroundTint="@color/gray">
+        </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/imageViewLinearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:visibility="invisible"
+        app:layout_constraintTop_toTopOf="@id/stickerView"
+        app:layout_constraintBottom_toBottomOf="@id/stickerView"
+        app:layout_constraintStart_toStartOf="@id/stickerView"
+        app:layout_constraintEnd_toEndOf="@id/stickerView"
+        app:layout_constraintVertical_bias="0">
+
+        <ImageView
+            android:id="@+id/neighborImageView1"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:layout_margin="5dp">
+        </ImageView>
+
+        <ImageView
+            android:id="@+id/neighborImageView2"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:layout_margin="5dp">
+        </ImageView>
+
+        <ImageView
+            android:id="@+id/neighborImageView3"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:layout_margin="5dp">
+        </ImageView>
+
+        <ImageView
+            android:id="@+id/neighborImageView4"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:layout_margin="5dp">
+        </ImageView>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/deleteButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:src="@drawable/icon_delete"
+            app:backgroundTint="@color/gray"
+            app:fabSize="mini">
+        </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
