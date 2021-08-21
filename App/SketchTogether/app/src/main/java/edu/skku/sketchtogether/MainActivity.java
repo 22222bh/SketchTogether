@@ -6,18 +6,19 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.ssomai.android.scalablelayout.ScalableLayout;
 
 public class MainActivity extends AppCompatActivity {
 
     Context context;
     StickerView stickerView;
-    Button suggestButton;
-    LinearLayout imageViewLinearLayout;
+    FloatingActionButton suggestButton;
+    FloatingActionButton deleteButton;
+    ScalableLayout imageViewLayout;
     ImageView neighborImageView1;
     ImageView neighborImageView2;
     ImageView neighborImageView3;
@@ -31,7 +32,8 @@ public class MainActivity extends AppCompatActivity {
 
         stickerView = findViewById(R.id.stickerView);
         suggestButton = findViewById(R.id.suggestButton);
-        imageViewLinearLayout = findViewById(R.id.imageViewLinearLayout);
+        deleteButton = findViewById(R.id.deleteButton);
+        imageViewLayout = findViewById(R.id.imageViewLayout);
         neighborImageView1 = findViewById(R.id.neighborImageView1);
         neighborImageView2 = findViewById(R.id.neighborImageView2);
         neighborImageView3 = findViewById(R.id.neighborImageView3);
@@ -42,12 +44,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // loadSticker()에서 스티커 이미지를 getDrawable()로 가져오면 OOM 에러가 생겨 Glide로 우회
-
                 Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView1);
                 Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView2);
                 Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView3);
                 Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView4);
-                imageViewLinearLayout.setVisibility(View.VISIBLE);
+                imageViewLayout.setVisibility(View.VISIBLE);
                 neighborImageView1.setClickable(true);
                 neighborImageView2.setClickable(true);
                 neighborImageView3.setClickable(true);
@@ -73,6 +74,17 @@ public class MainActivity extends AppCompatActivity {
         neighborImageView4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { loadSticker(neighborImageView4); }
+        });
+
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                imageViewLayout.setVisibility(View.INVISIBLE);
+                neighborImageView1.setClickable(false);
+                neighborImageView2.setClickable(false);
+                neighborImageView3.setClickable(false);
+                neighborImageView4.setClickable(false);
+            }
         });
 
     }
