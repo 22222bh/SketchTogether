@@ -227,8 +227,7 @@ public class StickerView extends FrameLayout {
     }
   }
 
-  protected void configIconMatrix(@NonNull BitmapStickerIcon icon, float x, float y,
-      float rotation) {
+  protected void configIconMatrix(@NonNull BitmapStickerIcon icon, float x, float y, float rotation) {
     icon.setX(x);
     icon.setY(y);
     icon.getMatrix().reset();
@@ -255,7 +254,6 @@ public class StickerView extends FrameLayout {
     if (locked) {
       return super.onTouchEvent(event);
     }
-
     int action = MotionEventCompat.getActionMasked(event);
 
     switch (action) {
@@ -271,7 +269,7 @@ public class StickerView extends FrameLayout {
         midPoint = calculateMidPoint(event);
 
         if (handlingSticker != null && isInStickerArea(handlingSticker, event.getX(1),
-            event.getY(1)) && findCurrentIconTouched() == null) {
+                event.getY(1)) && findCurrentIconTouched() == null) {
           currentMode = ActionMode.ZOOM_WITH_TWO_FINGER;
         }
         break;
@@ -294,7 +292,6 @@ public class StickerView extends FrameLayout {
         currentMode = ActionMode.NONE;
         break;
     }
-
     return true;
   }
 
@@ -507,9 +504,6 @@ public class StickerView extends FrameLayout {
     return (float) Math.toDegrees(radians);
   }
 
-  /**
-   * calculate Distance in two fingers
-   **/
   protected float calculateDistance(@Nullable MotionEvent event) {
     if (event == null || event.getPointerCount() < 2) {
       return 0f;
@@ -666,8 +660,7 @@ public class StickerView extends FrameLayout {
     return addSticker(sticker, Sticker.Position.CENTER);
   }
 
-  public StickerView addSticker(@NonNull final Sticker sticker,
-      final @Sticker.Position int position) {
+  public StickerView addSticker(@NonNull final Sticker sticker, final @Sticker.Position int position) {
     if (ViewCompat.isLaidOut(this)) {
       addStickerImmediately(sticker, position);
     } else {
@@ -793,7 +786,7 @@ public class StickerView extends FrameLayout {
   }
 
   @NonNull public StickerView setOnStickerOperationListener(
-      @Nullable OnStickerOperationListener onStickerOperationListener) {
+          @Nullable OnStickerOperationListener onStickerOperationListener) {
     this.onStickerOperationListener = onStickerOperationListener;
     return this;
   }
@@ -833,4 +826,5 @@ public class StickerView extends FrameLayout {
 
     void onStickerDoubleTapped(@NonNull Sticker sticker);
   }
+
 }

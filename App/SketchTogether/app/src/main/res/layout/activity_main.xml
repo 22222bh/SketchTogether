@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraintLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
@@ -28,12 +29,33 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <edu.skku.sketchtogether.StickerView
-                android:id="@+id/stickerView"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/light_gray">
-            </edu.skku.sketchtogether.StickerView>
+                android:background="@drawable/border">
+
+                <edu.skku.sketchtogether.DrawingView
+                    android:id="@+id/drawingView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="@android:color/transparent">
+                </edu.skku.sketchtogether.DrawingView>
+
+                <edu.skku.sketchtogether.CursorView
+                    android:id="@+id/cursorView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="@android:color/transparent">
+                </edu.skku.sketchtogether.CursorView>
+
+                <edu.skku.sketchtogether.StickerView
+                    android:id="@+id/stickerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="@android:color/transparent">
+                </edu.skku.sketchtogether.StickerView>
+
+            </FrameLayout>
 
             <LinearLayout
                 android:id="@+id/imageViewLinearLayout"
@@ -116,6 +138,18 @@
                 android:layout_weight="1"
                 android:layout_margin="5dp"
                 android:src="@drawable/icon_pen"
+                app:backgroundTint="@color/gray"
+                app:fabSize="normal">
+            </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/colorButton"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:src="@drawable/icon_pen"
+                android:visibility="gone"
                 app:backgroundTint="@color/gray"
                 app:fabSize="normal">
             </com.google.android.material.floatingactionbutton.FloatingActionButton>
