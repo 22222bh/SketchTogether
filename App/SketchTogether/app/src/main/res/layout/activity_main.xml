@@ -21,177 +21,139 @@
         <FrameLayout
             android:id="@+id/displayLayout"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="9"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/buttonLinearLayout"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/buttonLayout">
+            app:layout_constraintTop_toTopOf="parent">
 
-            <com.ssomai.android.scalablelayout.ScalableLayout
-                android:layout_width="wrap_content"
+            <edu.skku.sketchtogether.StickerView
+                android:id="@+id/stickerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/light_gray">
+            </edu.skku.sketchtogether.StickerView>
+
+            <LinearLayout
+                android:id="@+id/imageViewLinearLayout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                app:scale_base_width="800"
-                app:scale_base_height="600">
-
-                <edu.skku.sketchtogether.StickerView
-                    android:id="@+id/stickerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@color/light_gray"
-                    app:scale_left="0"
-                    app:scale_top="0"
-                    app:scale_width="800"
-                    app:scale_height="600">
-                </edu.skku.sketchtogether.StickerView>
-
-            </com.ssomai.android.scalablelayout.ScalableLayout>
-
-            <com.ssomai.android.scalablelayout.ScalableLayout
-                android:id="@+id/imageViewLayout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:visibility="invisible"
-                app:scale_base_width="800"
-                app:scale_base_height="100">
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:visibility="invisible">
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/neighborImageView1"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:scale_left="150"
-                    app:scale_top="0"
-                    app:scale_width="100"
-                    app:scale_height="100">
+                    android:layout_weight="1">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/neighborImageView2"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:scale_left="260"
-                    app:scale_top="0"
-                    app:scale_width="100"
-                    app:scale_height="100">
+                    android:layout_weight="1">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/neighborImageView3"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:scale_left="370"
-                    app:scale_top="0"
-                    app:scale_width="100"
-                    app:scale_height="100">
+                    android:layout_weight="1">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/neighborImageView4"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:scale_left="480"
-                    app:scale_top="0"
-                    app:scale_width="100"
-                    app:scale_height="100">
+                    android:layout_weight="1">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/deleteButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:scale_left="590"
-                    app:scale_top="25"
-                    app:scale_width="50"
-                    app:scale_height="50"
+                    android:layout_weight="1"
                     android:src="@drawable/icon_delete"
-                    app:backgroundTint="@color/gray">
+                    app:backgroundTint="@color/gray"
+                    app:fabSize="mini">
                 </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
-            </com.ssomai.android.scalablelayout.ScalableLayout>
+            </LinearLayout>
 
         </FrameLayout>
 
-        <com.ssomai.android.scalablelayout.ScalableLayout
-            android:id="@+id/buttonLayout"
+        <LinearLayout
+            android:id="@+id/buttonLinearLayout"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/displayLayout"
-            app:layout_constraintTop_toTopOf="parent"
-            app:scale_base_width="120"
-            app:scale_base_height="600">
+            app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/checkButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
                 android:src="@drawable/icon_check"
                 app:backgroundTint="@color/gray"
-                app:scale_height="100"
-                app:scale_left="10"
-                app:scale_top="0"
-                app:scale_width="100">
+                app:fabSize="normal">
             </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/penButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
                 android:src="@drawable/icon_pen"
                 app:backgroundTint="@color/gray"
-                app:scale_left="10"
-                app:scale_top="120"
-                app:scale_width="100"
-                app:scale_height="100">
+                app:fabSize="normal">
             </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/eraserButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
                 android:src="@drawable/icon_eraser"
                 app:backgroundTint="@color/gray"
-                app:scale_left="10"
-                app:scale_top="240"
-                app:scale_width="100"
-                app:scale_height="100">
+                app:fabSize="normal">
             </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/cursorButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
                 android:src="@drawable/icon_cursor"
                 app:backgroundTint="@color/gray"
-                app:scale_left="10"
-                app:scale_top="360"
-                app:scale_width="100"
-                app:scale_height="100">
+                app:fabSize="normal">
             </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/suggestButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
                 android:src="@drawable/icon_star"
                 app:backgroundTint="@color/gray"
-                app:fabSize="normal"
-                app:scale_left="10"
-                app:scale_top="480"
-                app:scale_width="100"
-                app:scale_height="100">
+                app:fabSize="normal">
             </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
-        </com.ssomai.android.scalablelayout.ScalableLayout>
+        </LinearLayout>
 
     </LinearLayout>
 
