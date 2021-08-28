@@ -120,6 +120,18 @@
                         app:fabSize="mini">
                     </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/checkButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        android:src="@drawable/icon_check"
+                        android:visibility="gone"
+                        app:backgroundTint="@color/gray"
+                        app:fabSize="mini">
+                    </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
                 </LinearLayout>
 
             </FrameLayout>
@@ -146,7 +158,7 @@
                 </edu.skku.sketchtogether.StickerView>
 
                 <edu.skku.sketchtogether.DrawingView
-                    android:id="@+id/drawingView"
+                    android:id="@+id/sketchingView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:backgroundTint="@android:color/transparent">
@@ -178,7 +190,18 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/checkButton"
+                android:id="@+id/removeButton"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:src="@drawable/icon_trash_can"
+                app:backgroundTint="@color/gray"
+                app:fabSize="mini">
+            </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/finishButton"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:layout_weight="1"

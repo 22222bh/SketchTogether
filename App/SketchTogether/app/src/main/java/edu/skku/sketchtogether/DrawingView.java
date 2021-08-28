@@ -102,6 +102,7 @@ public class DrawingView extends View {
         drawPath.moveTo(x, y);
         mX = x;
         mY = y;
+
     }
 
     private void touchUp() {
@@ -122,10 +123,19 @@ public class DrawingView extends View {
         }
     }
 
+    public void eraseArea(float left, float top, float right, float bottom) {
+        drawPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        drawPaint.setStyle(Paint.Style.FILL);
+        drawCanvas.drawRect(left, top, right, bottom, drawPaint);
+
+        drawPaint.setXfermode(null);
+        drawPaint.setStyle(Paint.Style.STROKE);
+    }
+
     public void eraseAll() {
         drawPath = new Path();
         paths.clear();
-        drawCanvas.drawColor(Color.WHITE);
+        eraseArea(0, 0, this.getWidth(), this.getHeight());
         invalidate();
     }
 
@@ -141,13 +151,8 @@ public class DrawingView extends View {
         drawPaint.setStrokeWidth(eraserBrushSize);
     }
 
-    public void eraseStickerArea(float left, float top, float right, float bottom) {
-        drawPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        drawPaint.setStyle(Paint.Style.FILL);
-        drawCanvas.drawRect(left, top, right, bottom, drawPaint);
-
-        drawPaint.setXfermode(null);
-        drawPaint.setStyle(Paint.Style.STROKE);
+    public void drawSticker(Bitmap bitmap) {
+        drawCanvas.drawBitmap(bitmap, 0, 0, null);
     }
 
     public Paint getDrawPaint() { return drawPaint; }

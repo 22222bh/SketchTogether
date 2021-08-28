@@ -2,7 +2,9 @@ package edu.skku.sketchtogether;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,6 +15,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -25,15 +28,17 @@ public class MainActivity extends AppCompatActivity {
 
     Context context;
     FrameLayout sketchLayout;
-    DrawingView drawingView;
+    DrawingView sketchingView;
     DrawingView coloringView;
     CursorView cursorView;
     StickerView stickerView;
     LinearLayout brushViewLinearLayout;
+    LinearLayout buttonLinearLayout;
     ImageView smallBrushView;
     ImageView mediumBrushView;
     ImageView largeBrushView;
-    FloatingActionButton checkButton;
+    FloatingActionButton finishButton;
+    FloatingActionButton removeButton;
     FloatingActionButton penButton;
     FloatingActionButton colorButton;
     FloatingActionButton brushButton;
@@ -41,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton cursorButton;
     FloatingActionButton suggestButton;
     FloatingActionButton deleteButton;
+    FloatingActionButton checkButton;
     LinearLayout imageViewLinearLayout;
     ImageView neighborImageView1;
     ImageView neighborImageView2;
@@ -53,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isSketchFinished = false;
     private boolean isEraserMode = false;
 
-    Bitmap croppedScreenshot;
+    Bitmap sketchScreenShot; // 스케치 캡쳐
+    Bitmap croppedScreenshot; // 인공지능에 넣을 부분 캡쳐
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,27 +70,74 @@ public class MainActivity extends AppCompatActivity {
 
         findViewsById();
 
-        checkButton.setOnClickListener(new View.OnClickListener() {
+        finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isSketchFinished = true;
-                brushViewLinearLayout.setVisibility(View.INVISIBLE);
-                cursorButton.setVisibility(View.INVISIBLE);
-                suggestButton.setVisibility(View.INVISIBLE);
-                checkButton.setVisibility(View.GONE);
-                penButton.setVisibility(View.GONE);
-                colorButton.setVisibility(View.VISIBLE);
-                brushButton.setVisibility(View.VISIBLE);
-                coloringView.setVisibility(View.VISIBLE);
-                coloringView.bringToFront();
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("스케치를 완료하시겠습니까?");
+                builder.setPositiveButton("네", new DialogInterface.OnClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        sketchScreenShot = getScreenshot(sketchingView);
+
+                        // 서버로 보내서 svg 변환
+
+                        isSketchFinished = true;
+                        brushViewLinearLayout.setVisibility(View.INVISIBLE);
+                        cursorButton.setVisibility(View.INVISIBLE);
+                        suggestButton.setVisibility(View.INVISIBLE);
+                        finishButton.setVisibility(View.GONE);
+                        penButton.setVisibility(View.GONE);
+                        colorButton.setVisibility(View.VISIBLE);
+                        brushButton.setVisibility(View.VISIBLE);
+                        coloringView.setVisibility(View.VISIBLE);
+                        coloringView.bringToFront();
+                        Toast.makeText(getApplicationContext(), "스케치가 완료되었습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                builder.setNegativeButton("아니오", new DialogInterface.OnClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+            }
+        });
+
+        removeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("캔버스를 초기화하시겠습니까?");
+                builder.setPositiveButton("네", new DialogInterface.OnClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        brushViewLinearLayout.setVisibility(View.INVISIBLE);
+                        if (isSketchFinished == true) {
+                            coloringView.eraseAll();
+                        }
+                        else {
+                            sketchingView.eraseAll();
+                        }
+                        Toast.makeText(getApplicationContext(), "캔버스가 초기화되었습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                builder.setNegativeButton("아니오", new DialogInterface.OnClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
             }
         });
 
         penButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawingView.bringToFront();
-                drawingView.setPenMode();
+                sketchingView.bringToFront();
+                sketchingView.setPenMode();
             }
         });
 
@@ -116,8 +170,8 @@ public class MainActivity extends AppCompatActivity {
                 setBrushView(largeBrushView, LARGE_BRUSH_SIZE);
                 brushViewLinearLayout.setVisibility(View.VISIBLE);
                 if (isSketchFinished == false) {
-                    drawingView.bringToFront();
-                    drawingView.setEraserMode();
+                    sketchingView.bringToFront();
+                    sketchingView.setEraserMode();
                 }
                 else {
                     coloringView.bringToFront();
@@ -133,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                     coloringView.setPenBrushSize(SMALL_BRUSH_SIZE);
                 }
                 else if (isSketchFinished == false) {
-                    drawingView.setEraserBrushSize(SMALL_BRUSH_SIZE);
+                    sketchingView.setEraserBrushSize(SMALL_BRUSH_SIZE);
                 }
                 else {
                     coloringView.setEraserBrushSize(SMALL_BRUSH_SIZE);
@@ -148,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
                     coloringView.setPenBrushSize(MEDIUM_BRUSH_SIZE);
                 }
                 else if (isSketchFinished == false) {
-                    drawingView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
+                    sketchingView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
                 }
                 else {
                     coloringView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
@@ -163,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
                     coloringView.setPenBrushSize(LARGE_BRUSH_SIZE);
                 }
                 else if (isSketchFinished == false) {
-                    drawingView.setEraserBrushSize(LARGE_BRUSH_SIZE);
+                    sketchingView.setEraserBrushSize(LARGE_BRUSH_SIZE);
                 }
                 else {
                     coloringView.setEraserBrushSize(LARGE_BRUSH_SIZE);
@@ -183,14 +237,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
+                buttonLinearLayout.setVisibility(View.INVISIBLE);
                 stickerView.bringToFront();
                 croppedScreenshot = getCroppedScreenshot(sketchLayout);
-                if (croppedScreenshot != null) {
-                    neighborImageView1.setImageBitmap(croppedScreenshot);
-                }
-                else {
-                    Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView1);
-                }
+
+                // croppedScreenshot 서버 전송하는 코드
+
+                Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView1);
                 Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView2);
                 Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView3);
                 Glide.with(context).load(R.drawable.icon_heart).into(neighborImageView4);
@@ -201,45 +254,65 @@ public class MainActivity extends AppCompatActivity {
         neighborImageView1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawingView.eraseStickerArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
+                deleteButton.setVisibility(View.GONE);
+                checkButton.setVisibility(View.VISIBLE);
+                sketchingView.eraseArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
                 loadSticker(neighborImageView1);
-                imageViewLinearLayout.setVisibility(View.INVISIBLE);
             }
         });
 
         neighborImageView2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawingView.eraseStickerArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
+                deleteButton.setVisibility(View.GONE);
+                checkButton.setVisibility(View.VISIBLE);
+                sketchingView.eraseArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
                 loadSticker(neighborImageView2);
-                imageViewLinearLayout.setVisibility(View.INVISIBLE);
             }
         });
 
         neighborImageView3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawingView.eraseStickerArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
+                deleteButton.setVisibility(View.GONE);
+                checkButton.setVisibility(View.VISIBLE);
+                sketchingView.eraseArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
                 loadSticker(neighborImageView3);
-                imageViewLinearLayout.setVisibility(View.INVISIBLE);
             }
         });
 
         neighborImageView4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawingView.eraseStickerArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
+                deleteButton.setVisibility(View.GONE);
+                checkButton.setVisibility(View.VISIBLE);
+                sketchingView.eraseArea(cursorView.getBeginCoordinate().x, cursorView.getBeginCoordinate().y, cursorView.getEndCoordinate().x, cursorView.getEndCoordinate().y);
                 loadSticker(neighborImageView4);
-                imageViewLinearLayout.setVisibility(View.INVISIBLE);
             }
         });
 
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                stickerView.removeAllStickers();
                 imageViewLinearLayout.setVisibility(View.INVISIBLE);
+                buttonLinearLayout.setVisibility(View.VISIBLE);
             }
         });
+
+        checkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stickerView.releaseHandlingSticker();
+                sketchingView.drawSticker(getScreenshot(stickerView));
+                stickerView.removeAllStickers();
+                imageViewLinearLayout.setVisibility(View.INVISIBLE);
+                deleteButton.setVisibility(View.VISIBLE);
+                checkButton.setVisibility(View.GONE);
+                buttonLinearLayout.setVisibility(View.VISIBLE);
+            }
+        });
+
     }
 
     // 브러쉬 사이즈 표시
@@ -249,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
-        Paint drawPaint = drawingView.getDrawPaint();
+        Paint drawPaint = coloringView.getDrawPaint();
         if (isEraserMode == true) {
             drawPaint.setXfermode(null);
             drawPaint.setColor(Color.BLACK);
@@ -259,16 +332,23 @@ public class MainActivity extends AppCompatActivity {
         view.setImageBitmap(bitmap);
     }
 
-    // 스티커뷰에서 스티커 추가
+    // 스티커 소환
     protected void loadSticker(ImageView imageView){
         Drawable drawable = imageView.getDrawable();
         DrawableSticker drawableSticker = new DrawableSticker(drawable);
         stickerView.addSticker(drawableSticker);
     }
 
-    // 스크린샷 부분캡쳐
-    protected Bitmap getCroppedScreenshot(View view) {
+    // 뷰 전체 캡쳐
+    protected Bitmap getScreenshot(View view) {
+        Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+        return bitmap;
+    }
 
+    // 뷰 부분 캡쳐
+    protected Bitmap getCroppedScreenshot(View view) {
         float beginX = cursorView.getBeginCoordinate().x;
         float beginY = cursorView.getBeginCoordinate().y;
         float endX = cursorView.getEndCoordinate().x;
@@ -283,12 +363,8 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
 
-        Bitmap originBmp = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(originBmp);
-        view.draw(canvas);
-
-        Bitmap croppedBmp = Bitmap.createBitmap(originBmp, x, y, width, height);
-        return croppedBmp;
+        Bitmap bitmap = Bitmap.createBitmap(getScreenshot(view), x, y, width, height);
+        return bitmap;
     }
 
     // 색상 선택
@@ -324,15 +400,17 @@ public class MainActivity extends AppCompatActivity {
 
     protected void findViewsById() {
         sketchLayout = findViewById(R.id.sketchLayout);
-        drawingView = findViewById(R.id.drawingView);
+        sketchingView = findViewById(R.id.sketchingView);
         coloringView = findViewById(R.id.coloringView);
         cursorView = findViewById(R.id.cursorView);
         stickerView = findViewById(R.id.stickerView);
         brushViewLinearLayout = findViewById(R.id.brushViewLinearLayout);
+        buttonLinearLayout = findViewById(R.id.buttonLinearLayout);
         smallBrushView = findViewById(R.id.smallBrushView);
         mediumBrushView = findViewById(R.id.mediumBrushView);
         largeBrushView = findViewById(R.id.largeBrushView);
-        checkButton = findViewById(R.id.checkButton);
+        finishButton = findViewById(R.id.finishButton);
+        removeButton = findViewById(R.id.removeButton);
         penButton = findViewById(R.id.penButton);
         colorButton = findViewById(R.id.colorButton);
         brushButton = findViewById(R.id.brushButton);
@@ -340,6 +418,7 @@ public class MainActivity extends AppCompatActivity {
         cursorButton = findViewById(R.id.cursorButton);
         suggestButton = findViewById(R.id.suggestButton);
         deleteButton = findViewById(R.id.deleteButton);
+        checkButton = findViewById(R.id.checkButton);
         imageViewLinearLayout = findViewById(R.id.imageViewLinearLayout);
         neighborImageView1 = findViewById(R.id.neighborImageView1);
         neighborImageView2 = findViewById(R.id.neighborImageView2);
