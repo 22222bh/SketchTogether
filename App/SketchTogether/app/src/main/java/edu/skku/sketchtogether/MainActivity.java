@@ -17,7 +17,10 @@ import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -88,11 +91,17 @@ public class MainActivity extends AppCompatActivity {
     BluetoothSocket bluetoothSocket;
     UUID bluetoothUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
+    long downTime;
+    long eventTime;
+    float touchX = 0.0f;
+    float touchY = 0.0f;
+
     private static final float SMALL_BRUSH_SIZE = 20;
     private static final float MEDIUM_BRUSH_SIZE = 60;
     private static final float LARGE_BRUSH_SIZE = 100;
     private boolean isSketchFinished = false;
     private boolean isEraserMode = false;
+    private boolean isTouchMode = false;
 
     Bitmap sketchScreenShot; // 스케치 캡쳐
     Bitmap croppedScreenshot; // 인공지능에 넣을 부분 캡쳐
@@ -104,8 +113,58 @@ public class MainActivity extends AppCompatActivity {
         context = this.getApplicationContext();
 
         findViewsById();
-        OpenBTSocket();
+        // OpenBTSocket(); 블루투스 소켓 연결 안되는 중...
 
+        sketchLayout.setOnGenericMotionListener(new View.OnGenericMotionListener() {
+            @Override
+            public boolean onGenericMotion(View v, MotionEvent event) {
+                touchX = event.getX();
+                touchY = event.getY();
+                if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+                    if (isTouchMode) {
+                        downTime = SystemClock.uptimeMillis();
+                        eventTime = SystemClock.uptimeMillis();
+                        MotionEvent moveMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_MOVE, touchX, touchY, 0);
+                        if (isSketchFinished) {
+                            coloringView.dispatchTouchEvent(moveMotionEvent);
+                        }
+                        else {
+                            sketchingView.dispatchTouchEvent(moveMotionEvent);
+                        }
+                    }
+                }
+                return false;
+            }
+        });
+
+        finishButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isTouchMode ^= true;
+                if (isTouchMode) {
+                    downTime = SystemClock.uptimeMillis();
+                    eventTime = SystemClock.uptimeMillis();
+                    MotionEvent downMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_DOWN, touchX, touchY, 0);
+                    if (isSketchFinished) {
+                        coloringView.dispatchTouchEvent(downMotionEvent);
+                    }
+                    else {
+                        sketchingView.dispatchTouchEvent(downMotionEvent);
+                    }
+                }
+                else {
+                    MotionEvent upMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_UP, touchX, touchY, 0);
+                    if (isSketchFinished) {
+                        coloringView.dispatchTouchEvent(upMotionEvent);
+                    }
+                    else {
+                        sketchingView.dispatchTouchEvent(upMotionEvent);
+                    }
+                }
+            }
+        });
+
+        /*
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -114,14 +173,14 @@ public class MainActivity extends AppCompatActivity {
                 builder.setPositiveButton("네", new DialogInterface.OnClickListener(){
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
-                        if (isSketchFinished == true) {
-                            SendMessageByBT("Bluetooth!");
+                        if (isSketchFinished) {
+                            // SendMessageByBT("Bluetooth!");
                             Toast.makeText(getApplicationContext(), "채색이 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                         else {
                             sketchScreenShot = getScreenshot(sketchingView);
 
-                            // 로봇팔? 서버? 에 sketchScreenShot 전송
+                            // 로봇팔에 sketchScreenShot 전송
 
                             isSketchFinished = true;
                             brushViewLinearLayout.setVisibility(View.INVISIBLE);
@@ -148,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
                 alertDialog.show();
             }
         });
+        */
 
         removeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -158,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         brushViewLinearLayout.setVisibility(View.INVISIBLE);
-                        if (isSketchFinished == true) {
+                        if (isSketchFinished) {
                             coloringView.eraseAll();
                         }
                         else {
@@ -209,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
                 setBrushView(mediumBrushView, MEDIUM_BRUSH_SIZE);
                 setBrushView(largeBrushView, LARGE_BRUSH_SIZE);
                 brushViewLinearLayout.setVisibility(View.VISIBLE);
-                if (isSketchFinished == false) {
+                if (!isSketchFinished) {
                     sketchingView.bringToFront();
                     sketchingView.setEraserMode();
                 }
@@ -223,10 +283,10 @@ public class MainActivity extends AppCompatActivity {
         smallBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isEraserMode == false) {
+                if (!isEraserMode) {
                     coloringView.setPenBrushSize(SMALL_BRUSH_SIZE);
                 }
-                else if (isSketchFinished == false) {
+                else if (!isSketchFinished) {
                     sketchingView.setEraserBrushSize(SMALL_BRUSH_SIZE);
                 }
                 else {
@@ -238,10 +298,10 @@ public class MainActivity extends AppCompatActivity {
         mediumBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isEraserMode == false) {
+                if (!isEraserMode) {
                     coloringView.setPenBrushSize(MEDIUM_BRUSH_SIZE);
                 }
-                else if (isSketchFinished == false) {
+                else if (!isSketchFinished) {
                     sketchingView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
                 }
                 else {
@@ -253,10 +313,10 @@ public class MainActivity extends AppCompatActivity {
         largeBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isEraserMode == false) {
+                if (!isEraserMode) {
                     coloringView.setPenBrushSize(LARGE_BRUSH_SIZE);
                 }
-                else if (isSketchFinished == false) {
+                else if (!isSketchFinished) {
                     sketchingView.setEraserBrushSize(LARGE_BRUSH_SIZE);
                 }
                 else {
@@ -496,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
         Canvas canvas = new Canvas(bitmap);
 
         Paint drawPaint = coloringView.getDrawPaint();
-        if (isEraserMode == true) {
+        if (isEraserMode) {
             drawPaint.setXfermode(null);
             drawPaint.setColor(Color.BLACK);
         }
