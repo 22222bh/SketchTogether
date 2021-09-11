@@ -26,8 +26,8 @@ public class DrawingView extends View {
     private Bitmap canvasBitmap;
 
     private ArrayList<Path> paths = new ArrayList<Path>();
-    private ArrayList<Float> points = new ArrayList<>();
-    private ArrayList<ArrayList<Float>> allPoints = new ArrayList<>();
+    private ArrayList<String> points = new ArrayList<>();
+    private ArrayList<ArrayList<String>> allPoints = new ArrayList<>();
     private float mX, mY;
     private static final float TOUCH_TOLERANCE = 4;
     private static final float SMALL_BRUSH_SIZE = 20;
@@ -105,8 +105,7 @@ public class DrawingView extends View {
         drawPath.moveTo(x, y);
         mX = x;
         mY = y;
-        points.add(x);
-        points.add(y);
+        points.add("(" + Float.toString(x) + ", " + Float.toString(y) + ")");
     }
 
     private void touchUp() {
@@ -124,8 +123,7 @@ public class DrawingView extends View {
             drawPath.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
             mX = x;
             mY = y;
-            points.add(x);
-            points.add(y);
+            points.add("(" + Float.toString(x) + ", " + Float.toString(y) + ")");
         }
     }
 
@@ -161,7 +159,7 @@ public class DrawingView extends View {
         drawCanvas.drawBitmap(bitmap, 0, 0, null);
     }
 
-    public ArrayList<ArrayList<Float>> getAllPoints() {
+    public ArrayList<ArrayList<String>> getAllPoints() {
         return allPoints;
     }
 

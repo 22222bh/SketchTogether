@@ -15,7 +15,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
@@ -89,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
     List<String> pairedDevicesList;
     BluetoothDevice bluetoothDevice;
     BluetoothSocket bluetoothSocket;
-    UUID bluetoothUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final UUID bluetoothUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     long downTime;
     long eventTime;
@@ -103,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isEraserMode = false;
     private boolean isTouchMode = false;
 
-    Bitmap sketchScreenShot; // 스케치 캡쳐
+    Bitmap sketchScreenshot; // 스케치 캡쳐
     Bitmap croppedScreenshot; // 인공지능에 넣을 부분 캡쳐
 
     @Override
@@ -113,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         context = this.getApplicationContext();
 
         findViewsById();
-        // OpenBTSocket(); 블루투스 소켓 연결 안되는 중...
+        OpenBTSocket();
 
         sketchLayout.setOnGenericMotionListener(new View.OnGenericMotionListener() {
             @Override
@@ -140,51 +139,26 @@ public class MainActivity extends AppCompatActivity {
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isTouchMode ^= true;
-                if (isTouchMode) {
-                    downTime = SystemClock.uptimeMillis();
-                    eventTime = SystemClock.uptimeMillis();
-                    MotionEvent downMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_DOWN, touchX, touchY, 0);
-                    if (isSketchFinished) {
-                        coloringView.dispatchTouchEvent(downMotionEvent);
-                    }
-                    else {
-                        sketchingView.dispatchTouchEvent(downMotionEvent);
-                    }
-                }
-                else {
-                    MotionEvent upMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_UP, touchX, touchY, 0);
-                    if (isSketchFinished) {
-                        coloringView.dispatchTouchEvent(upMotionEvent);
-                    }
-                    else {
-                        sketchingView.dispatchTouchEvent(upMotionEvent);
-                    }
-                }
-            }
-        });
-
-        /*
-        finishButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setTitle("스케치를 완료하시겠습니까?");
                 builder.setPositiveButton("네", new DialogInterface.OnClickListener(){
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         if (isSketchFinished) {
-                            // SendMessageByBT("Bluetooth!");
+                            // 로봇팔에 coloringView.getAllPoints() 전송
+
                             Toast.makeText(getApplicationContext(), "채색이 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                         else {
-                            sketchScreenShot = getScreenshot(sketchingView);
+                            // 서버에 sketchScreenshot의 file 전송
+                            sketchScreenshot = getScreenshot(sketchingView);
+                            File sketchScreenShotFile = BitmapConvertFile(sketchScreenshot, String.valueOf(getFilesDir()) + "sketch.bin");
+                            SendData2Server(sketchScreenShotFile);
 
-                            // 로봇팔에 sketchScreenShot 전송
+                            // 서버에서 svg 받아서 로봇팔에 sketchScreenshot의 전송
 
                             isSketchFinished = true;
                             brushViewLinearLayout.setVisibility(View.INVISIBLE);
-                            finishButton.setVisibility(View.GONE);
                             deleteButton.setVisibility(View.GONE);
                             penButton.setVisibility(View.GONE);
                             eraserButton.setVisibility(View.GONE);
@@ -207,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
                 alertDialog.show();
             }
         });
-        */
 
         removeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -340,8 +313,8 @@ public class MainActivity extends AppCompatActivity {
                 buttonLinearLayout.setVisibility(View.INVISIBLE);
                 stickerView.bringToFront();
                 croppedScreenshot = getCroppedScreenshot(sketchLayout);
-                File fileimg = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
-                SendData2Server(fileimg);
+                File croppedScreenshotFile = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
+                SendData2Server(croppedScreenshotFile);
             }
         });
 
@@ -408,6 +381,40 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.d("key pressed", String.valueOf(event.getKeyCode()));
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                Log.d("KeyUP Event", "볼륨업 키 down");
+                isTouchMode ^= true;
+                if (isTouchMode) {
+                    downTime = SystemClock.uptimeMillis();
+                    eventTime = SystemClock.uptimeMillis();
+                    MotionEvent downMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_DOWN, touchX, touchY, 0);
+                    if (isSketchFinished) {
+                        coloringView.dispatchTouchEvent(downMotionEvent);
+                    }
+                    else {
+                        sketchingView.dispatchTouchEvent(downMotionEvent);
+                    }
+                }
+                else {
+                    MotionEvent upMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_UP, touchX, touchY, 0);
+                    if (isSketchFinished) {
+                        coloringView.dispatchTouchEvent(upMotionEvent);
+                    }
+                    else {
+                        sketchingView.dispatchTouchEvent(upMotionEvent);
+                    }
+                }
+                return true;
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                Log.d("KeyUP Event", "볼륨다운 키 down");
+                return true;
+        }
+        return false;
+    }
+
     // 블루투스 연결
     public void OpenBTSocket() {
         bluetoothManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
@@ -431,43 +438,49 @@ public class MainActivity extends AppCompatActivity {
             builder.setItems(items, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int item) {
-                    for(BluetoothDevice device : pairedDevices) {
+                    for (BluetoothDevice device : pairedDevices) {
                         if (items[item].toString().equals(device.getName())) {
                             bluetoothDevice = device;
+                            Log.d("BT!!", bluetoothDevice.getName());
                             break;
                         }
                     }
                     try {
-                        bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(bluetoothUUID);
+                        Class<?> clazz = bluetoothDevice.getClass();
+                        Class<?>[] paramTypes = new Class<?>[] {Integer.TYPE};
+                        Method m = clazz.getMethod("createRfcommSocket", paramTypes);
+                        Object[] params = new Object[] {Integer.valueOf(1)};
+                        Log.d("BT!!", "Created RFComm Connection");
+                        bluetoothSocket = (BluetoothSocket) m.invoke(bluetoothDevice, params);
                         bluetoothSocket.connect();
+                        Log.d("BT!!", "Connected Succeed");
                     } catch (IOException e) {
-                        Log.e("BluetoothService", "Connect Fail");
-                        Toast.makeText(getApplicationContext(), "bluetoothSocket.connect() error", Toast.LENGTH_LONG).show();
+                        Log.e("BT!!", "Connected Failed", e);
+                    } catch (Exception e1) {
+                        Log.e("BT!!", "Could not create RFComm Connection", e1);
                     }
                 }
             });
             AlertDialog alert = builder.create();
             alert.show();
         }
-        else {
-            Toast.makeText(getApplicationContext(), "pairing error", Toast.LENGTH_LONG).show();
-        }
     }
 
-    // 블루투스로 텍스트 전송
+    // 블루투스로 파일 전송
     public void SendMessageByBT(String message) {
-        OutputStream mmOutStream = null;
+        OutputStream outputStream = null;
         try {
-            mmOutStream = bluetoothSocket.getOutputStream();
+            outputStream = bluetoothSocket.getOutputStream();
         } catch (IOException e) {
-            Toast.makeText(getApplicationContext(), "bluetoothSocket.getOutputStream() error", Toast.LENGTH_LONG).show();
+            Log.e("BT!!", "Could not get output stream", e);
         }
-
         byte[] bytes = message.getBytes();
         try {
-            mmOutStream.write(bytes);
+            outputStream.write(bytes);
+            Log.d("BT!!", message);
+            outputStream.close();
         } catch (IOException e) {
-            Toast.makeText(getApplicationContext(), "mmOutStream.write() error", Toast.LENGTH_LONG).show();
+            Log.e("BT!!", "Could not write output stream", e);
         }
     }
 
