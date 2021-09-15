@@ -1,6 +1,7 @@
 package edu.skku.sketchtogether;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -14,6 +15,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -32,10 +34,12 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton removeButton;
     FloatingActionButton penButton;
     FloatingActionButton colorButton;
-    FloatingActionButton brushButton;
     FloatingActionButton eraserButton;
     FloatingActionButton cursorButton;
     FloatingActionButton suggestButton;
@@ -98,12 +101,21 @@ public class MainActivity extends AppCompatActivity {
     private static final float SMALL_BRUSH_SIZE = 20;
     private static final float MEDIUM_BRUSH_SIZE = 60;
     private static final float LARGE_BRUSH_SIZE = 100;
+    private static final int PEN_MODE = 1;
+    private static final int ERASER_MODE = 2;
+    private static final int CURSOR_MODE = 3;
+    private static final int SUGGEST_MODE = 4;
     private boolean isSketchFinished = false;
-    private boolean isEraserMode = false;
     private boolean isTouchMode = false;
+    private boolean isBrushViewSet = false;
 
-    Bitmap sketchScreenshot; // 스케치 캡쳐
-    Bitmap croppedScreenshot; // 인공지능에 넣을 부분 캡쳐
+    private final String pointsFileName = "points.txt";
+    private final String colorsFileName = "colors.txt";
+
+    private Bitmap sketchScreenshot; // 스케치 캡쳐
+    private Bitmap croppedScreenshot; // 인공지능에 넣을 부분 캡쳐
+    private File fileDir;
+    private String filePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +124,11 @@ public class MainActivity extends AppCompatActivity {
         context = this.getApplicationContext();
 
         findViewsById();
-        OpenBTSocket();
+        // OpenBTSocket();
+        fileDir = getFilesDir();
+        filePath = fileDir.getPath();
+
+        PressButton(PEN_MODE);
 
         sketchLayout.setOnGenericMotionListener(new View.OnGenericMotionListener() {
             @Override
@@ -140,17 +156,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("스케치를 완료하시겠습니까?");
+                builder.setTitle("완료하시겠습니까?");
                 builder.setPositiveButton("네", new DialogInterface.OnClickListener(){
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         if (isSketchFinished) {
-                            // 로봇팔에 coloringView.getAllPoints() 전송
-
+                            // 로봇팔에 txt 파일 전송
+                            WriteTextFile(pointsFileName, coloringView.getAllPoints().toString());
+                            WriteTextFile(colorsFileName, coloringView.getAllColors().toString());
                             Toast.makeText(getApplicationContext(), "채색이 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                         else {
-                            // 서버에 sketchScreenshot의 file 전송
+                            // 서버에 sketchScreenshot 사진 파일 전송
                             sketchScreenshot = getScreenshot(sketchingView);
                             File sketchScreenShotFile = BitmapConvertFile(sketchScreenshot, String.valueOf(getFilesDir()) + "sketch.bin");
                             SendData2Server(sketchScreenShotFile);
@@ -165,9 +182,9 @@ public class MainActivity extends AppCompatActivity {
                             cursorButton.setVisibility(View.GONE);
                             suggestButton.setVisibility(View.GONE);
                             colorButton.setVisibility(View.VISIBLE);
-                            brushButton.setVisibility(View.VISIBLE);
                             coloringView.setVisibility(View.VISIBLE);
                             coloringView.bringToFront();
+                            coloringView.setPenMode();
                             Toast.makeText(getApplicationContext(), "스케치가 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -196,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         else {
                             sketchingView.eraseAll();
+                            PressButton(PEN_MODE);
                         }
                         Toast.makeText(getApplicationContext(), "캔버스가 초기화되었습니다.", Toast.LENGTH_SHORT).show();
                     }
@@ -213,8 +231,7 @@ public class MainActivity extends AppCompatActivity {
         penButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sketchingView.bringToFront();
-                sketchingView.setPenMode();
+                PressButton(PEN_MODE);
             }
         });
 
@@ -222,13 +239,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 openColorPicker();
-            }
-        });
-
-        brushButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                isEraserMode = false;
                 coloringView.bringToFront();
                 coloringView.setPenMode();
             }
@@ -237,84 +247,49 @@ public class MainActivity extends AppCompatActivity {
         eraserButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isEraserMode = true;
-                setBrushView(smallBrushView, SMALL_BRUSH_SIZE);
-                setBrushView(mediumBrushView, MEDIUM_BRUSH_SIZE);
-                setBrushView(largeBrushView, LARGE_BRUSH_SIZE);
-                brushViewLinearLayout.setVisibility(View.VISIBLE);
-                if (!isSketchFinished) {
-                    sketchingView.bringToFront();
-                    sketchingView.setEraserMode();
+                if (!isBrushViewSet) {
+                    setBrushView(smallBrushView, SMALL_BRUSH_SIZE);
+                    setBrushView(mediumBrushView, MEDIUM_BRUSH_SIZE);
+                    setBrushView(largeBrushView, LARGE_BRUSH_SIZE);
+                    PressBrushView(SMALL_BRUSH_SIZE);
+                    isBrushViewSet = true;
                 }
-                else {
-                    coloringView.bringToFront();
-                    coloringView.setEraserMode();
-                }
+                PressButton(ERASER_MODE);
             }
         });
 
         smallBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!isEraserMode) {
-                    coloringView.setPenBrushSize(SMALL_BRUSH_SIZE);
-                }
-                else if (!isSketchFinished) {
-                    sketchingView.setEraserBrushSize(SMALL_BRUSH_SIZE);
-                }
-                else {
-                    coloringView.setEraserBrushSize(SMALL_BRUSH_SIZE);
-                }
+                PressBrushView(SMALL_BRUSH_SIZE);
             }
         });
 
         mediumBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!isEraserMode) {
-                    coloringView.setPenBrushSize(MEDIUM_BRUSH_SIZE);
-                }
-                else if (!isSketchFinished) {
-                    sketchingView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
-                }
-                else {
-                    coloringView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
-                }
+                PressBrushView(MEDIUM_BRUSH_SIZE);
             }
         });
 
         largeBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!isEraserMode) {
-                    coloringView.setPenBrushSize(LARGE_BRUSH_SIZE);
-                }
-                else if (!isSketchFinished) {
-                    sketchingView.setEraserBrushSize(LARGE_BRUSH_SIZE);
-                }
-                else {
-                    coloringView.setEraserBrushSize(LARGE_BRUSH_SIZE);
-                }
+                PressBrushView(LARGE_BRUSH_SIZE);
             }
         });
 
         cursorButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                brushViewLinearLayout.setVisibility(View.INVISIBLE);
-                cursorView.bringToFront();
+                PressButton(CURSOR_MODE);
             }
         });
 
         suggestButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                brushViewLinearLayout.setVisibility(View.INVISIBLE);
-                buttonLinearLayout.setVisibility(View.INVISIBLE);
-                stickerView.bringToFront();
-                croppedScreenshot = getCroppedScreenshot(sketchLayout);
-                File croppedScreenshotFile = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
-                SendData2Server(croppedScreenshotFile);
+                PressButton(SUGGEST_MODE);
             }
         });
 
@@ -381,11 +356,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // 터치 ON/OFF
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         Log.d("key pressed", String.valueOf(event.getKeyCode()));
         switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
-                Log.d("KeyUP Event", "볼륨업 키 down");
                 isTouchMode ^= true;
                 if (isTouchMode) {
                     downTime = SystemClock.uptimeMillis();
@@ -409,7 +384,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                Log.d("KeyUP Event", "볼륨다운 키 down");
                 return true;
         }
         return false;
@@ -463,24 +437,6 @@ public class MainActivity extends AppCompatActivity {
             });
             AlertDialog alert = builder.create();
             alert.show();
-        }
-    }
-
-    // 블루투스로 파일 전송
-    public void SendMessageByBT(String message) {
-        OutputStream outputStream = null;
-        try {
-            outputStream = bluetoothSocket.getOutputStream();
-        } catch (IOException e) {
-            Log.e("BT!!", "Could not get output stream", e);
-        }
-        byte[] bytes = message.getBytes();
-        try {
-            outputStream.write(bytes);
-            Log.d("BT!!", message);
-            outputStream.close();
-        } catch (IOException e) {
-            Log.e("BT!!", "Could not write output stream", e);
         }
     }
 
@@ -561,21 +517,81 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // 버튼 모드 표시
+    protected  void PressButton(int mode) {
+        switch (mode) {
+            case PEN_MODE:
+                penButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.gray));
+                eraserButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.light_gray));
+                cursorButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.light_gray));
+                brushViewLinearLayout.setVisibility(View.INVISIBLE);
+                sketchingView.bringToFront();
+                sketchingView.setPenMode();
+                break;
+            case ERASER_MODE:
+                penButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.light_gray));
+                eraserButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.gray));
+                cursorButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.light_gray));
+                brushViewLinearLayout.setVisibility(View.VISIBLE);
+                sketchingView.bringToFront();
+                sketchingView.setEraserMode();
+                brushViewLinearLayout.bringToFront();
+                break;
+            case CURSOR_MODE:
+                penButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.light_gray));
+                eraserButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.light_gray));
+                cursorButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.gray));
+                brushViewLinearLayout.setVisibility(View.INVISIBLE);
+                cursorView.bringToFront();
+                break;
+            case SUGGEST_MODE:
+                brushViewLinearLayout.setVisibility(View.INVISIBLE);
+                buttonLinearLayout.setVisibility(View.INVISIBLE);
+                stickerView.bringToFront();
+                croppedScreenshot = getCroppedScreenshot(sketchLayout);
+                File croppedScreenshotFile = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
+                SendData2Server(croppedScreenshotFile);
+                break;
+            default:
+                brushViewLinearLayout.setVisibility(View.INVISIBLE);
+                break;
+        }
+    }
+
     // 브러쉬 사이즈 표시
     protected void setBrushView(ImageView view, float size) {
-        int width = eraserButton.getWidth() * 2;
-        int height = eraserButton.getHeight();
+        int width = eraserButton.getWidth() * 4;
+        int height = eraserButton.getHeight() * 2;
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
         Paint drawPaint = coloringView.getDrawPaint();
-        if (isEraserMode) {
-            drawPaint.setXfermode(null);
-            drawPaint.setColor(Color.BLACK);
-        }
+        drawPaint.setColor(ContextCompat.getColor(context, R.color.dark_gray));
         drawPaint.setStrokeWidth(size);
         canvas.drawLine(width / 4, height / 2, width * 3 / 4, height / 2, drawPaint);
         view.setImageBitmap(bitmap);
+    }
+
+    // 브러쉬 모드 표시
+    protected void PressBrushView(float size) {
+        if (size == SMALL_BRUSH_SIZE) {
+            sketchingView.setEraserBrushSize(SMALL_BRUSH_SIZE);
+            smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
+            mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
+            largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
+        }
+        else if (size == MEDIUM_BRUSH_SIZE) {
+            sketchingView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
+            smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
+            mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
+            largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
+        }
+        else if (size == LARGE_BRUSH_SIZE) {
+            sketchingView.setEraserBrushSize(LARGE_BRUSH_SIZE);
+            smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
+            mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
+            largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
+        }
     }
 
     // 스티커 소환
@@ -633,15 +649,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChooseColor(int position, int color) {
                 coloringView.setPaintColor(color);
-                setBrushView(smallBrushView, SMALL_BRUSH_SIZE);
-                setBrushView(mediumBrushView, MEDIUM_BRUSH_SIZE);
-                setBrushView(largeBrushView, LARGE_BRUSH_SIZE);
+                colorButton.setColorFilter(color, PorterDuff.Mode.SRC_IN);
             }
 
             @Override
             public void onCancel() {
             }
         }).show();
+    }
+
+    // txt 파일 쓰기
+    public void WriteTextFile(String filename, String contents){
+        try {
+            FileOutputStream fos = new FileOutputStream(filePath+"/"+filename, false);
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
+            writer.write(contents);
+            writer.flush();
+            writer.close();
+            fos.close();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
     protected void findViewsById() {
@@ -659,7 +687,6 @@ public class MainActivity extends AppCompatActivity {
         removeButton = findViewById(R.id.removeButton);
         penButton = findViewById(R.id.penButton);
         colorButton = findViewById(R.id.colorButton);
-        brushButton = findViewById(R.id.brushButton);
         eraserButton = findViewById(R.id.eraserButton);
         cursorButton = findViewById(R.id.cursorButton);
         suggestButton = findViewById(R.id.suggestButton);
@@ -671,4 +698,5 @@ public class MainActivity extends AppCompatActivity {
         neighborImageView3 = findViewById(R.id.neighborImageView3);
         neighborImageView4 = findViewById(R.id.neighborImageView4);
     }
+
 }

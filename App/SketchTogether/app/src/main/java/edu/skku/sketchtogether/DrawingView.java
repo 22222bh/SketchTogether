@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import androidx.annotation.Nullable;
 
-import android.graphics.PathMeasure;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.util.AttributeSet;
@@ -27,10 +26,11 @@ public class DrawingView extends View {
 
     private ArrayList<Path> paths = new ArrayList<Path>();
     private ArrayList<String> points = new ArrayList<>();
+    private ArrayList<String> allColors = new ArrayList<>();
     private ArrayList<ArrayList<String>> allPoints = new ArrayList<>();
     private float mX, mY;
     private static final float TOUCH_TOLERANCE = 4;
-    private static final float SMALL_BRUSH_SIZE = 20;
+    private static final float SMALL_BRUSH_SIZE = 10;
     private float penBrushSize = SMALL_BRUSH_SIZE;
     private float eraserBrushSize = SMALL_BRUSH_SIZE;
 
@@ -105,6 +105,7 @@ public class DrawingView extends View {
         drawPath.moveTo(x, y);
         mX = x;
         mY = y;
+        allColors.add(String.format("#%06X", (0xFFFFFF & drawPaint.getColor())));
         points.add("(" + Float.toString(x) + ", " + Float.toString(y) + ")");
     }
 
@@ -139,6 +140,8 @@ public class DrawingView extends View {
     public void eraseAll() {
         drawPath = new Path();
         paths.clear();
+        allPoints.clear();
+        allColors.clear();
         eraseArea(0, 0, this.getWidth(), this.getHeight());
         invalidate();
     }
@@ -158,6 +161,8 @@ public class DrawingView extends View {
     public void drawSticker(Bitmap bitmap) {
         drawCanvas.drawBitmap(bitmap, 0, 0, null);
     }
+
+    public ArrayList<String> getAllColors() { return allColors; }
 
     public ArrayList<ArrayList<String>> getAllPoints() {
         return allPoints;
