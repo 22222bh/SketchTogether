@@ -113,8 +113,6 @@ public class MainActivity extends AppCompatActivity {
     private final String colorsFileName = "colors.txt";
 
     private Bitmap sketchScreenshot; // 스케치 캡쳐
-    private Bitmap croppedScreenshot; // 인공지능에 넣을 부분 캡쳐
-    private File fileDir;
     private String filePath;
 
     @Override
@@ -125,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewsById();
         // OpenBTSocket();
-        fileDir = getFilesDir();
+        File fileDir = getFilesDir();
         filePath = fileDir.getPath();
 
         PressButton(PEN_MODE);
@@ -356,11 +354,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // 터치 ON/OFF
+    // 터치 ON/OFF & 키보드로 그리기
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        Log.d("key pressed", String.valueOf(event.getKeyCode()));
+        Log.d("KEY_DOWN", String.valueOf(event.getKeyCode()));
         switch (keyCode) {
-            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_A:
                 isTouchMode ^= true;
                 if (isTouchMode) {
                     downTime = SystemClock.uptimeMillis();
@@ -383,10 +381,43 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 return true;
-            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_DPAD_UP:
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (isTouchMode) {
+                    keyboardTouchMove(keyCode);
+                }
                 return true;
         }
         return false;
+    }
+
+    // 키보드 터치 이벤트
+    protected void keyboardTouchMove(int keyCode) {
+        downTime = SystemClock.uptimeMillis();
+        eventTime = SystemClock.uptimeMillis();
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_UP:
+                touchY -= 5;
+                break;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                touchY += 5;
+                break;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                touchX -= 5;
+                break;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                touchX += 5;
+                break;
+        }
+        MotionEvent moveMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_MOVE, touchX, touchY, 0);
+        if (isSketchFinished) {
+            coloringView.dispatchTouchEvent(moveMotionEvent);
+        }
+        else {
+            sketchingView.dispatchTouchEvent(moveMotionEvent);
+        }
     }
 
     // 블루투스 연결
@@ -548,7 +579,7 @@ public class MainActivity extends AppCompatActivity {
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
                 buttonLinearLayout.setVisibility(View.INVISIBLE);
                 stickerView.bringToFront();
-                croppedScreenshot = getCroppedScreenshot(sketchLayout);
+                Bitmap croppedScreenshot = getCroppedScreenshot(sketchLayout);
                 File croppedScreenshotFile = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
                 SendData2Server(croppedScreenshotFile);
                 break;

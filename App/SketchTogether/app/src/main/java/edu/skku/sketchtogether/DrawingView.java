@@ -19,6 +19,7 @@ import java.util.ArrayList;
 public class DrawingView extends View {
     private Path drawPath;
     private Paint drawPaint;
+    private Paint pointPaint;
     private Paint canvasPaint;
     public int paintColor;
     private Canvas drawCanvas;
@@ -44,6 +45,8 @@ public class DrawingView extends View {
 
         drawPath = new Path();
         drawPaint = new Paint();
+        pointPaint = new Paint();
+        canvasPaint = new Paint(Paint.DITHER_FLAG);
 
         drawPaint.setColor(Color.BLACK);
         drawPaint.setStrokeWidth(SMALL_BRUSH_SIZE);
@@ -52,12 +55,18 @@ public class DrawingView extends View {
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
 
-        canvasPaint = new Paint(Paint.DITHER_FLAG);
+        pointPaint.setColor(Color.BLACK);
+        pointPaint.setStrokeWidth(1);
+        pointPaint.setAntiAlias(true);
+        pointPaint.setStyle(Paint.Style.STROKE);
+        pointPaint.setStrokeJoin(Paint.Join.ROUND);
+        pointPaint.setStrokeCap(Paint.Cap.ROUND);
     }
 
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         canvas.drawPath(drawPath, drawPaint);
+        canvas.drawCircle(mX, mY, 20, pointPaint);
     }
 
     public void setPaintColor(int color) {
