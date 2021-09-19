@@ -55,18 +55,20 @@ public class DrawingView extends View {
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
 
+        /*
         pointPaint.setColor(Color.BLACK);
-        pointPaint.setStrokeWidth(1);
+        pointPaint.setStrokeWidth(2);
         pointPaint.setAntiAlias(true);
         pointPaint.setStyle(Paint.Style.STROKE);
         pointPaint.setStrokeJoin(Paint.Join.ROUND);
         pointPaint.setStrokeCap(Paint.Cap.ROUND);
+        */
     }
 
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         canvas.drawPath(drawPath, drawPaint);
-        canvas.drawCircle(mX, mY, 20, pointPaint);
+        // canvas.drawCircle(mX, mY, 20, pointPaint);
     }
 
     public void setPaintColor(int color) {

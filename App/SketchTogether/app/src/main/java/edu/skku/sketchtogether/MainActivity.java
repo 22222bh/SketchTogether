@@ -105,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int ERASER_MODE = 2;
     private static final int CURSOR_MODE = 3;
     private static final int SUGGEST_MODE = 4;
+    private int mode;
     private boolean isSketchFinished = false;
     private boolean isTouchMode = false;
     private boolean isBrushViewSet = false;
@@ -138,11 +139,15 @@ public class MainActivity extends AppCompatActivity {
                         downTime = SystemClock.uptimeMillis();
                         eventTime = SystemClock.uptimeMillis();
                         MotionEvent moveMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_MOVE, touchX, touchY, 0);
-                        if (isSketchFinished) {
-                            coloringView.dispatchTouchEvent(moveMotionEvent);
+                        if (mode == PEN_MODE || mode == ERASER_MODE) {
+                            if (isSketchFinished) {
+                                coloringView.dispatchTouchEvent(moveMotionEvent);
+                            } else {
+                                sketchingView.dispatchTouchEvent(moveMotionEvent);
+                            }
                         }
-                        else {
-                            sketchingView.dispatchTouchEvent(moveMotionEvent);
+                        else if (mode == CURSOR_MODE) {
+                            cursorView.dispatchTouchEvent(moveMotionEvent);
                         }
                     }
                 }
@@ -166,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         else {
                             // 서버에 sketchScreenshot 사진 파일 전송
+
                             sketchScreenshot = getScreenshot(sketchingView);
                             File sketchScreenShotFile = BitmapConvertFile(sketchScreenshot, String.valueOf(getFilesDir()) + "sketch.bin");
                             SendData2Server(sketchScreenShotFile);
@@ -354,72 +360,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // 터치 ON/OFF & 키보드로 그리기
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        Log.d("KEY_DOWN", String.valueOf(event.getKeyCode()));
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_A:
-                isTouchMode ^= true;
-                if (isTouchMode) {
-                    downTime = SystemClock.uptimeMillis();
-                    eventTime = SystemClock.uptimeMillis();
-                    MotionEvent downMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_DOWN, touchX, touchY, 0);
-                    if (isSketchFinished) {
-                        coloringView.dispatchTouchEvent(downMotionEvent);
-                    }
-                    else {
-                        sketchingView.dispatchTouchEvent(downMotionEvent);
-                    }
-                }
-                else {
-                    MotionEvent upMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_UP, touchX, touchY, 0);
-                    if (isSketchFinished) {
-                        coloringView.dispatchTouchEvent(upMotionEvent);
-                    }
-                    else {
-                        sketchingView.dispatchTouchEvent(upMotionEvent);
-                    }
-                }
-                return true;
-            case KeyEvent.KEYCODE_DPAD_UP:
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                if (isTouchMode) {
-                    keyboardTouchMove(keyCode);
-                }
-                return true;
-        }
-        return false;
-    }
-
-    // 키보드 터치 이벤트
-    protected void keyboardTouchMove(int keyCode) {
-        downTime = SystemClock.uptimeMillis();
-        eventTime = SystemClock.uptimeMillis();
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_UP:
-                touchY -= 5;
-                break;
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                touchY += 5;
-                break;
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-                touchX -= 5;
-                break;
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                touchX += 5;
-                break;
-        }
-        MotionEvent moveMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_MOVE, touchX, touchY, 0);
-        if (isSketchFinished) {
-            coloringView.dispatchTouchEvent(moveMotionEvent);
-        }
-        else {
-            sketchingView.dispatchTouchEvent(moveMotionEvent);
-        }
-    }
-
     // 블루투스 연결
     public void OpenBTSocket() {
         bluetoothManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
@@ -471,85 +411,84 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // 비트맵 -> 파일
-    public File BitmapConvertFile(Bitmap bitmap, String strFilePath) {
-        File file = new File(getFilesDir(), "file.bin") ;
-        OutputStream out = null;
-        try {
-            file.createNewFile();
-            out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    // 터치 ON/OFF & 키보드로 그리기
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_A: // 키보드 A
+            case KeyEvent.KEYCODE_BACK: // 트랙볼 왼쪽 뒤로 가기
+                isTouchMode ^= true;
+                if (isTouchMode) {
+                    downTime = SystemClock.uptimeMillis();
+                    eventTime = SystemClock.uptimeMillis();
+                    MotionEvent downMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_DOWN, touchX, touchY, 0);
+                    if (mode == PEN_MODE || mode == ERASER_MODE) {
+                        if (isSketchFinished) {
+                            coloringView.dispatchTouchEvent(downMotionEvent);
+                        } else {
+                            sketchingView.dispatchTouchEvent(downMotionEvent);
+                        }
+                    }
+                    else if (mode == CURSOR_MODE) {
+                        cursorView.dispatchTouchEvent(downMotionEvent);
+                    }
+                }
+                else {
+                    MotionEvent upMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_UP, touchX, touchY, 0);
+                    if (mode == PEN_MODE || mode == ERASER_MODE) {
+                        if (isSketchFinished) {
+                            coloringView.dispatchTouchEvent(upMotionEvent);
+                        } else {
+                            sketchingView.dispatchTouchEvent(upMotionEvent);
+                        }
+                    }
+                    else if (mode == CURSOR_MODE) {
+                        cursorView.dispatchTouchEvent(upMotionEvent);
+                    }
+                }
+                return true;
+            case KeyEvent.KEYCODE_DPAD_UP:
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (isTouchMode) {
+                    keyboardTouchMove(keyCode);
+                }
+                return true;
         }
-        return file;
+        return false;
     }
 
-    // 파일 서버 전송
-    public void SendData2Server(File file){
-        Log.d("TEST : ", "Request");
-
-        RequestBody requestBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("files", "galleryfile", RequestBody.create(MultipartBody.FORM, file))
-                .build();
-
-        Request request = new Request.Builder()
-                .url("http://blee.iptime.org:22222/haewon")
-                .post(requestBody)
-                .build();
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.MINUTES) // connect timeout
-                .writeTimeout(5, TimeUnit.MINUTES) // write timeout
-                .readTimeout(5, TimeUnit.MINUTES) // read timeout
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                Log.d("TEST : ", "Response");
-                String responseData = response.body().string();
-                Log.d("TEST : ", responseData);
-                try {
-                    JSONObject json = new JSONObject(responseData);
-                    System.out.println(json);
-
-                    List<String> suggestedImageList = new ArrayList<String>();
-                    for (int i = 0; i < 4; i++) {
-                        suggestedImageList.add(i, json.getString("img" + (i + 1)));
-                    }
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            Resources resources = MainActivity.this.getResources();
-                            int resourceId1 = resources.getIdentifier(suggestedImageList.get(0), "drawable", MainActivity.this.getPackageName());
-                            int resourceId2 = resources.getIdentifier(suggestedImageList.get(1), "drawable", MainActivity.this.getPackageName());
-                            int resourceId3 = resources.getIdentifier(suggestedImageList.get(2), "drawable", MainActivity.this.getPackageName());
-                            int resourceId4 = resources.getIdentifier(suggestedImageList.get(3), "drawable", MainActivity.this.getPackageName());
-
-                            Glide.with(context).load(resourceId1).into(neighborImageView1);
-                            Glide.with(context).load(resourceId2).into(neighborImageView2);
-                            Glide.with(context).load(resourceId3).into(neighborImageView3);
-                            Glide.with(context).load(resourceId4).into(neighborImageView4);
-                            imageViewLinearLayout.setVisibility(View.VISIBLE);
-                        }
-                    });
-                } catch(JSONException e){
-                    e.printStackTrace();
-                }
-            }
-        });
+    // 키보드 터치 이벤트
+    protected void keyboardTouchMove(int keyCode) {
+        downTime = SystemClock.uptimeMillis();
+        eventTime = SystemClock.uptimeMillis();
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_UP:
+                touchY -= 5;
+                break;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                touchY += 5;
+                break;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                touchX -= 5;
+                break;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                touchX += 5;
+                break;
+        }
+        MotionEvent moveMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_MOVE, touchX, touchY, 0);
+        if (isSketchFinished) {
+            coloringView.dispatchTouchEvent(moveMotionEvent);
+        }
+        else {
+            sketchingView.dispatchTouchEvent(moveMotionEvent);
+        }
     }
 
     // 버튼 모드 표시
     protected  void PressButton(int mode) {
+        cursorView.setDrawRectangle(false);
+        cursorView.invalidate();
         switch (mode) {
             case PEN_MODE:
                 penButton.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.gray));
@@ -587,6 +526,7 @@ public class MainActivity extends AppCompatActivity {
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
                 break;
         }
+        this.mode = mode;
     }
 
     // 브러쉬 사이즈 표시
@@ -687,6 +627,83 @@ public class MainActivity extends AppCompatActivity {
             public void onCancel() {
             }
         }).show();
+    }
+
+    // 비트맵 -> 파일
+    public File BitmapConvertFile(Bitmap bitmap, String strFilePath) {
+        File file = new File(getFilesDir(), "file.bin") ;
+        OutputStream out = null;
+        try {
+            file.createNewFile();
+            out = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return file;
+    }
+
+    // 파일 서버 전송
+    public void SendData2Server(File file){
+        Log.d("TEST : ", "Request");
+
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("files", "galleryfile", RequestBody.create(MultipartBody.FORM, file))
+                .build();
+
+        Request request = new Request.Builder()
+                .url("http://blee.iptime.org:22222/haewon")
+                .post(requestBody)
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.MINUTES) // connect timeout
+                .writeTimeout(5, TimeUnit.MINUTES) // write timeout
+                .readTimeout(5, TimeUnit.MINUTES) // read timeout
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                Log.d("TEST : ", "Response");
+                String responseData = response.body().string();
+                Log.d("TEST : ", responseData);
+                try {
+                    JSONObject json = new JSONObject(responseData);
+                    System.out.println(json);
+
+                    List<String> suggestedImageList = new ArrayList<String>();
+                    for (int i = 0; i < 4; i++) {
+                        suggestedImageList.add(i, json.getString("img" + (i + 1)));
+                    }
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            Resources resources = MainActivity.this.getResources();
+                            int resourceId1 = resources.getIdentifier(suggestedImageList.get(0), "drawable", MainActivity.this.getPackageName());
+                            int resourceId2 = resources.getIdentifier(suggestedImageList.get(1), "drawable", MainActivity.this.getPackageName());
+                            int resourceId3 = resources.getIdentifier(suggestedImageList.get(2), "drawable", MainActivity.this.getPackageName());
+                            int resourceId4 = resources.getIdentifier(suggestedImageList.get(3), "drawable", MainActivity.this.getPackageName());
+
+                            Glide.with(context).load(resourceId1).into(neighborImageView1);
+                            Glide.with(context).load(resourceId2).into(neighborImageView2);
+                            Glide.with(context).load(resourceId3).into(neighborImageView3);
+                            Glide.with(context).load(resourceId4).into(neighborImageView4);
+                            imageViewLinearLayout.setVisibility(View.VISIBLE);
+                        }
+                    });
+                } catch(JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     // txt 파일 쓰기
