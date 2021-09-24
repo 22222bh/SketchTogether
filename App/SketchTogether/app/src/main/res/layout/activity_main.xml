@@ -80,28 +80,32 @@
                     android:id="@+id/neighborImageView1"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:clickable="true">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/neighborImageView2"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:clickable="true">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/neighborImageView3"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:clickable="true">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/neighborImageView4"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:clickable="true">
                 </androidx.appcompat.widget.AppCompatImageView>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -123,6 +127,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:src="@drawable/icon_check"
+                    android:visibility="gone"
                     app:backgroundTint="@color/light_gray"
                     app:fabSize="normal"
                     app:borderWidth="3dp">
@@ -142,6 +147,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:backgroundTint="@android:color/transparent">
+
             </edu.skku.sketchtogether.StickerView>
 
             <edu.skku.sketchtogether.DrawingView

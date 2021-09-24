@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView neighborImageView2;
     ImageView neighborImageView3;
     ImageView neighborImageView4;
+    ImageView imageView;
 
     BluetoothManager bluetoothManager;
     BluetoothAdapter bluetoothAdapter;
@@ -112,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final String pointsFileName = "points.txt";
     private final String colorsFileName = "colors.txt";
+    private final String screenshotFileName = "screenshot.png";
 
     private Bitmap sketchScreenshot; // 스케치 캡쳐
     private String filePath;
@@ -165,18 +167,16 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int id) {
                         if (isSketchFinished) {
                             // 로봇팔에 txt 파일 전송
-                            WriteTextFile(pointsFileName, coloringView.getAllPoints().toString());
-                            WriteTextFile(colorsFileName, coloringView.getAllColors().toString());
+                            saveTextFile(pointsFileName, coloringView.getAllPoints().toString());
+                            saveTextFile(colorsFileName, coloringView.getAllColors().toString());
                             Toast.makeText(getApplicationContext(), "채색이 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                         else {
-                            // 서버에 sketchScreenshot 사진 파일 전송
-
                             sketchScreenshot = getScreenshot(sketchingView);
+                            saveImage(context, screenshotFileName, sketchScreenshot);
                             File sketchScreenShotFile = BitmapConvertFile(sketchScreenshot, String.valueOf(getFilesDir()) + "sketch.bin");
                             SendData2Server(sketchScreenShotFile);
-
-                            // 서버에서 svg 받아서 로봇팔에 sketchScreenshot의 전송
+                            // 서버에서 svg 받아서 로봇팔에 전송
 
                             isSketchFinished = true;
                             brushViewLinearLayout.setVisibility(View.INVISIBLE);
@@ -343,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
                 stickerView.removeAllStickers();
                 imageViewLinearLayout.setVisibility(View.INVISIBLE);
                 buttonLinearLayout.setVisibility(View.VISIBLE);
+                PressButton(PEN_MODE);
             }
         });
 
@@ -356,6 +357,7 @@ public class MainActivity extends AppCompatActivity {
                 deleteButton.setVisibility(View.VISIBLE);
                 checkButton.setVisibility(View.GONE);
                 buttonLinearLayout.setVisibility(View.VISIBLE);
+                PressButton(PEN_MODE);
             }
         });
     }
@@ -517,10 +519,12 @@ public class MainActivity extends AppCompatActivity {
             case SUGGEST_MODE:
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
                 buttonLinearLayout.setVisibility(View.INVISIBLE);
-                stickerView.bringToFront();
+                imageViewLinearLayout.setVisibility(View.VISIBLE);
                 Bitmap croppedScreenshot = getCroppedScreenshot(sketchLayout);
                 File croppedScreenshotFile = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
                 SendData2Server(croppedScreenshotFile);
+                stickerView.bringToFront();
+                imageViewLinearLayout.bringToFront();
                 break;
             default:
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
@@ -654,7 +658,7 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         Request request = new Request.Builder()
-                .url("http://blee.iptime.org:22222/haewon")
+                .url("http://blee.iptime.org:22222/model")
                 .post(requestBody)
                 .build();
 
@@ -706,8 +710,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // txt 파일 쓰기
-    public void WriteTextFile(String filename, String contents){
+    // txt 파일 내부 저장소 저장
+    public void saveTextFile(String filename, String contents){
         try {
             FileOutputStream fos = new FileOutputStream(filePath+"/"+filename, false);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
@@ -716,6 +720,18 @@ public class MainActivity extends AppCompatActivity {
             writer.close();
             fos.close();
         } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    // 이미지 파일 내부 저장소 저장
+    public void saveImage(Context context, String filename, Bitmap bitmap){
+        FileOutputStream fileOutputStream;
+        try {
+            fileOutputStream = context.openFileOutput(filename, Context.MODE_PRIVATE);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 90, fileOutputStream);
+            fileOutputStream.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
