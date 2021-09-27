@@ -84,7 +84,6 @@ public class MainActivity extends AppCompatActivity {
     ImageView neighborImageView2;
     ImageView neighborImageView3;
     ImageView neighborImageView4;
-    ImageView imageView;
 
     BluetoothManager bluetoothManager;
     BluetoothAdapter bluetoothAdapter;
@@ -99,9 +98,10 @@ public class MainActivity extends AppCompatActivity {
     float touchX = 0.0f;
     float touchY = 0.0f;
 
-    private static final float SMALL_BRUSH_SIZE = 20;
-    private static final float MEDIUM_BRUSH_SIZE = 60;
-    private static final float LARGE_BRUSH_SIZE = 100;
+    private static final float PEN_BRUSH_SIZE = 10;
+    private static final float SMALL_ERASER_BRUSH_SIZE = 20;
+    private static final float MEDIUM_ERASER_BRUSH_SIZE = 60;
+    private static final float LARGE_ERASER_BRUSH_SIZE = 100;
     private static final int PEN_MODE = 1;
     private static final int ERASER_MODE = 2;
     private static final int CURSOR_MODE = 3;
@@ -111,8 +111,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isTouchMode = false;
     private boolean isBrushViewSet = false;
 
-    private final String pointsFileName = "points.txt";
-    private final String colorsFileName = "colors.txt";
+    private final String textFileName = "textfile.txt";
     private final String screenshotFileName = "screenshot.png";
 
     private Bitmap sketchScreenshot; // 스케치 캡쳐
@@ -167,8 +166,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int id) {
                         if (isSketchFinished) {
                             // 로봇팔에 txt 파일 전송
-                            saveTextFile(pointsFileName, coloringView.getAllPoints().toString());
-                            saveTextFile(colorsFileName, coloringView.getAllColors().toString());
+                            saveTextFile(textFileName);
                             Toast.makeText(getApplicationContext(), "채색이 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                         else {
@@ -188,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
                             colorButton.setVisibility(View.VISIBLE);
                             coloringView.setVisibility(View.VISIBLE);
                             coloringView.bringToFront();
+                            coloringView.setPenBrushSize(PEN_BRUSH_SIZE);
                             coloringView.setPenMode();
                             Toast.makeText(getApplicationContext(), "스케치가 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
@@ -252,10 +251,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!isBrushViewSet) {
-                    setBrushView(smallBrushView, SMALL_BRUSH_SIZE);
-                    setBrushView(mediumBrushView, MEDIUM_BRUSH_SIZE);
-                    setBrushView(largeBrushView, LARGE_BRUSH_SIZE);
-                    PressBrushView(SMALL_BRUSH_SIZE);
+                    setBrushView(smallBrushView, SMALL_ERASER_BRUSH_SIZE);
+                    setBrushView(mediumBrushView, MEDIUM_ERASER_BRUSH_SIZE);
+                    setBrushView(largeBrushView, LARGE_ERASER_BRUSH_SIZE);
+                    PressBrushView(SMALL_ERASER_BRUSH_SIZE);
                     isBrushViewSet = true;
                 }
                 PressButton(ERASER_MODE);
@@ -265,21 +264,21 @@ public class MainActivity extends AppCompatActivity {
         smallBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PressBrushView(SMALL_BRUSH_SIZE);
+                PressBrushView(SMALL_ERASER_BRUSH_SIZE);
             }
         });
 
         mediumBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PressBrushView(MEDIUM_BRUSH_SIZE);
+                PressBrushView(MEDIUM_ERASER_BRUSH_SIZE);
             }
         });
 
         largeBrushView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PressBrushView(LARGE_BRUSH_SIZE);
+                PressBrushView(LARGE_ERASER_BRUSH_SIZE);
             }
         });
 
@@ -549,20 +548,20 @@ public class MainActivity extends AppCompatActivity {
 
     // 브러쉬 모드 표시
     protected void PressBrushView(float size) {
-        if (size == SMALL_BRUSH_SIZE) {
-            sketchingView.setEraserBrushSize(SMALL_BRUSH_SIZE);
+        if (size == SMALL_ERASER_BRUSH_SIZE) {
+            sketchingView.setEraserBrushSize(SMALL_ERASER_BRUSH_SIZE);
             smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
             mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
         }
-        else if (size == MEDIUM_BRUSH_SIZE) {
-            sketchingView.setEraserBrushSize(MEDIUM_BRUSH_SIZE);
+        else if (size == MEDIUM_ERASER_BRUSH_SIZE) {
+            sketchingView.setEraserBrushSize(MEDIUM_ERASER_BRUSH_SIZE);
             smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
             largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
         }
-        else if (size == LARGE_BRUSH_SIZE) {
-            sketchingView.setEraserBrushSize(LARGE_BRUSH_SIZE);
+        else if (size == LARGE_ERASER_BRUSH_SIZE) {
+            sketchingView.setEraserBrushSize(LARGE_ERASER_BRUSH_SIZE);
             smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
@@ -711,11 +710,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // txt 파일 내부 저장소 저장
-    public void saveTextFile(String filename, String contents){
+    public void saveTextFile(String filename){
         try {
             FileOutputStream fos = new FileOutputStream(filePath+"/"+filename, false);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
-            writer.write(contents);
+            writer.write(coloringView.getColors().toString());
+            writer.write("\n");
+            writer.write(coloringView.getAllPoints().toString());
             writer.flush();
             writer.close();
             fos.close();

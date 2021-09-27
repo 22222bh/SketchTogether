@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -19,21 +20,21 @@ import java.util.ArrayList;
 public class DrawingView extends View {
     private Path drawPath;
     private Paint drawPaint;
-    private Paint pointPaint;
     private Paint canvasPaint;
     public int paintColor;
     private Canvas drawCanvas;
     private Bitmap canvasBitmap;
 
     private ArrayList<Path> paths = new ArrayList<Path>();
-    private ArrayList<String> points = new ArrayList<>();
-    private ArrayList<String> allColors = new ArrayList<>();
-    private ArrayList<ArrayList<String>> allPoints = new ArrayList<>();
+    private ArrayList<String> points;
+    private ArrayList<String> colors;
+    private ArrayList<ArrayList<String>> allPoints;
     private float mX, mY;
     private static final float TOUCH_TOLERANCE = 4;
-    private static final float SMALL_BRUSH_SIZE = 10;
-    private float penBrushSize = SMALL_BRUSH_SIZE;
-    private float eraserBrushSize = SMALL_BRUSH_SIZE;
+    private static final float PEN_BRUSH_SIZE = 5;
+    private static final float ERASER_BRUSH_SIZE = 20;
+    private float penBrushSize = PEN_BRUSH_SIZE;
+    private float eraserBrushSize = ERASER_BRUSH_SIZE;
 
     public DrawingView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -45,30 +46,22 @@ public class DrawingView extends View {
 
         drawPath = new Path();
         drawPaint = new Paint();
-        pointPaint = new Paint();
         canvasPaint = new Paint(Paint.DITHER_FLAG);
 
         drawPaint.setColor(Color.BLACK);
-        drawPaint.setStrokeWidth(SMALL_BRUSH_SIZE);
+        drawPaint.setStrokeWidth(penBrushSize);
         drawPaint.setAntiAlias(true);
         drawPaint.setStyle(Paint.Style.STROKE);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
 
-        /*
-        pointPaint.setColor(Color.BLACK);
-        pointPaint.setStrokeWidth(2);
-        pointPaint.setAntiAlias(true);
-        pointPaint.setStyle(Paint.Style.STROKE);
-        pointPaint.setStrokeJoin(Paint.Join.ROUND);
-        pointPaint.setStrokeCap(Paint.Cap.ROUND);
-        */
+        colors = new ArrayList<>();
+        allPoints = new ArrayList<>();
     }
 
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         canvas.drawPath(drawPath, drawPaint);
-        // canvas.drawCircle(mX, mY, 20, pointPaint);
     }
 
     public void setPaintColor(int color) {
@@ -112,12 +105,12 @@ public class DrawingView extends View {
 
     public void touchStart(float x, float y) {
         drawPath.reset();
-        points.clear();
+        points = new ArrayList<>();
         drawPath.moveTo(x, y);
         mX = x;
         mY = y;
-        allColors.add(String.format("#%06X", (0xFFFFFF & drawPaint.getColor())));
-        points.add("(" + Float.toString(x) + ", " + Float.toString(y) + ")");
+        colors.add(String.format("#%06X", (0xFFFFFF & drawPaint.getColor())));
+        points.add("(" + x + ", " + y + ")");
     }
 
     private void touchUp() {
@@ -135,7 +128,7 @@ public class DrawingView extends View {
             drawPath.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
             mX = x;
             mY = y;
-            points.add("(" + Float.toString(x) + ", " + Float.toString(y) + ")");
+            points.add("(" + x + ", " + y + ")");
         }
     }
 
@@ -151,8 +144,8 @@ public class DrawingView extends View {
     public void eraseAll() {
         drawPath = new Path();
         paths.clear();
-        allPoints.clear();
-        allColors.clear();
+        allPoints = new ArrayList<>();
+        colors = new ArrayList<>();
         eraseArea(0, 0, this.getWidth(), this.getHeight());
         invalidate();
     }
@@ -173,7 +166,7 @@ public class DrawingView extends View {
         drawCanvas.drawBitmap(bitmap, 0, 0, null);
     }
 
-    public ArrayList<String> getAllColors() { return allColors; }
+    public ArrayList<String> getColors() { return colors; }
 
     public ArrayList<ArrayList<String>> getAllPoints() {
         return allPoints;
@@ -183,11 +176,9 @@ public class DrawingView extends View {
 
     public void setPenBrushSize(float penBrushSize) {
         this.penBrushSize = penBrushSize;
-        setPenMode();
     }
 
     public void setEraserBrushSize(float eraserBrushSize) {
         this.eraserBrushSize = eraserBrushSize;
-        setEraserMode();
     }
 }
