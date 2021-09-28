@@ -178,7 +178,5 @@ public class DrawingView extends View {
         this.penBrushSize = penBrushSize;
     }
 
-    public void setEraserBrushSize(float eraserBrushSize) {
-        this.eraserBrushSize = eraserBrushSize;
-    }
+    public void setEraserBrushSize(float eraserBrushSize) { this.eraserBrushSize = eraserBrushSize; }
 }

@@ -291,9 +291,7 @@ public class MainActivity extends AppCompatActivity {
 
         suggestButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                PressButton(SUGGEST_MODE);
-            }
+            public void onClick(View v) { PressButton(SUGGEST_MODE); }
         });
 
         neighborImageView1.setOnClickListener(new View.OnClickListener() {
@@ -519,11 +517,16 @@ public class MainActivity extends AppCompatActivity {
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
                 buttonLinearLayout.setVisibility(View.INVISIBLE);
                 imageViewLinearLayout.setVisibility(View.VISIBLE);
-                Bitmap croppedScreenshot = getCroppedScreenshot(sketchLayout);
+                neighborImageView1.setImageBitmap(null);
+                neighborImageView2.setImageBitmap(null);
+                neighborImageView3.setImageBitmap(null);
+                neighborImageView4.setImageBitmap(null);
+                Bitmap croppedScreenshot = invertBmp(getCroppedScreenshot(sketchLayout));
                 File croppedScreenshotFile = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
                 SendData2Server(croppedScreenshotFile);
                 stickerView.bringToFront();
                 imageViewLinearLayout.bringToFront();
+                neighborImageView1.setImageBitmap(croppedScreenshot);
                 break;
             default:
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
@@ -550,18 +553,21 @@ public class MainActivity extends AppCompatActivity {
     protected void PressBrushView(float size) {
         if (size == SMALL_ERASER_BRUSH_SIZE) {
             sketchingView.setEraserBrushSize(SMALL_ERASER_BRUSH_SIZE);
+            sketchingView.setEraserMode();
             smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
             mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
         }
         else if (size == MEDIUM_ERASER_BRUSH_SIZE) {
             sketchingView.setEraserBrushSize(MEDIUM_ERASER_BRUSH_SIZE);
+            sketchingView.setEraserMode();
             smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
             largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
         }
         else if (size == LARGE_ERASER_BRUSH_SIZE) {
             sketchingView.setEraserBrushSize(LARGE_ERASER_BRUSH_SIZE);
+            sketchingView.setEraserMode();
             smallBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             mediumBrushView.setColorFilter(ContextCompat.getColor(context, R.color.dark_gray), PorterDuff.Mode.SRC_IN);
             largeBrushView.setColorFilter(ContextCompat.getColor(context, R.color.black), PorterDuff.Mode.SRC_IN);
@@ -601,6 +607,35 @@ public class MainActivity extends AppCompatActivity {
 
         Bitmap bitmap = Bitmap.createBitmap(getScreenshot(view), x, y, width, height);
         return bitmap;
+    }
+
+    // 흑백반전
+    private Bitmap invertBmp(final Bitmap originBmp){
+        int width, height;
+        width = originBmp.getWidth();
+        height = originBmp.getHeight();
+
+        Bitmap newBmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+        int A, R, G, B;
+        int pixel;
+
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                pixel = originBmp.getPixel(x, y);
+                A = Color.alpha(pixel);
+                R = Color.red(pixel);
+                G = Color.green(pixel);
+                B = Color.blue(pixel);
+                int gray = (int) (0.2989 * R + 0.5870 * G + 0.1140 * B);
+                if (gray > 128)
+                    gray = 0;
+                else
+                    gray = 255;
+                newBmp.setPixel(x, y, Color.argb(A, gray, gray, gray));
+            }
+        }
+        return newBmp;
     }
 
     // 색상 선택
@@ -730,7 +765,7 @@ public class MainActivity extends AppCompatActivity {
         FileOutputStream fileOutputStream;
         try {
             fileOutputStream = context.openFileOutput(filename, Context.MODE_PRIVATE);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 90, fileOutputStream);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 90, fileOutputStream);
             fileOutputStream.close();
         } catch (Exception e) {
             e.printStackTrace();
