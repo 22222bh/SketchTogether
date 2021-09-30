@@ -642,25 +642,31 @@ public class MainActivity extends AppCompatActivity {
     protected void openColorPicker() {
         final ColorPicker colorPicker = new ColorPicker(this);
         final ArrayList<String> colors = new ArrayList<>();
-        colors.add("#258180");
-        colors.add("#3C8D2F");
-        colors.add("#20724F");
-        colors.add("#6a3ab2");
-        colors.add("#323299");
-        colors.add("#800080");
-        colors.add("#b79716");
-        colors.add("#966d37");
-        colors.add("#b77231");
         colors.add("#000000");
+        colors.add("#0D072E");
+        colors.add("#190F3A");
+        colors.add("#012362");
+        colors.add("#354C96");
+        colors.add("#1E468E");
+        colors.add("#004547");
+        colors.add("#03753A");
+        colors.add("#4F93B8");
+        colors.add("#95244D");
+        colors.add("#690E20");
+        colors.add("#461920");
+        colors.add("#961D12");
+        colors.add("#946314");
+        colors.add("#B03402");
+        colors.add("#C3732C");
+        colors.add("#BEBC46");
+        colors.add("#F2F2F2");
 
-        colorPicker.setRoundColorButton(true).setColumns(5).setColorButtonTickColor(Color.parseColor("#000000"))
-                .setDefaultColorButton(Color.parseColor("#000000")).setOnChooseColorListener(new ColorPicker.OnChooseColorListener() {
+        colorPicker.setColors(colors).setColumns(6).setRoundColorButton(true).setOnChooseColorListener(new ColorPicker.OnChooseColorListener() {
             @Override
             public void onChooseColor(int position, int color) {
                 coloringView.setPaintColor(color);
                 colorButton.setColorFilter(color, PorterDuff.Mode.SRC_IN);
             }
-
             @Override
             public void onCancel() {
             }
