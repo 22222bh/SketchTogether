@@ -20,7 +20,6 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -40,7 +39,6 @@ import org.json.JSONObject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -59,8 +57,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import petrov.kristiyan.colorpicker.ColorPicker;
-
-import static android.os.Environment.DIRECTORY_DOWNLOADS;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -691,23 +687,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    public void writeFile() {
-        String fileTitle = "title.txt";
-        File file = new File(Environment.getExternalStorageDirectory(), fileTitle);
-
-        try {
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            FileWriter writer = new FileWriter(file, false);
-            String str = "      저장할 내용      ";
-            writer.write(str);
-            writer.close();
-        } catch (IOException e) {
-
-        }
     }
 
     // txt 파일 내부 저장소 저장
