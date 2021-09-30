@@ -2,6 +2,7 @@ package edu.skku.sketchtogether;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -10,14 +11,16 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -37,6 +40,7 @@ import org.json.JSONObject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -55,6 +59,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import petrov.kristiyan.colorpicker.ColorPicker;
+
+import static android.os.Environment.DIRECTORY_DOWNLOADS;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -115,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
     private final String screenshotFileName = "screenshot.png";
 
     private Bitmap sketchScreenshot; // 스케치 캡쳐
-    private String filePath;
+    private String internalFilePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,9 +130,10 @@ public class MainActivity extends AppCompatActivity {
         context = this.getApplicationContext();
 
         findViewsById();
-        // OpenBTSocket();
-        File fileDir = getFilesDir();
-        filePath = fileDir.getPath();
+
+        OpenBTSocket();
+        File internalFileDir = getFilesDir();
+        internalFilePath = internalFileDir.getPath();
 
         PressButton(PEN_MODE);
 
@@ -165,16 +172,22 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         if (isSketchFinished) {
-                            // 로봇팔에 txt 파일 전송
                             saveTextFile(textFileName);
+
                             Toast.makeText(getApplicationContext(), "채색이 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                         else {
                             sketchScreenshot = getScreenshot(sketchingView);
                             saveImage(context, screenshotFileName, sketchScreenshot);
-                            File sketchScreenShotFile = BitmapConvertFile(sketchScreenshot, String.valueOf(getFilesDir()) + "sketch.bin");
+                            File sketchScreenShotFile = Bmp2File(sketchScreenshot, String.valueOf(getFilesDir()) + "sketch.bin");
                             SendData2Server(sketchScreenShotFile);
-                            // 서버에서 svg 받아서 로봇팔에 전송
+                            Uri uri = FileProvider.getUriForFile(context, "edu.skku.sketchtogether.fileprovider",new File(context.getFilesDir(), "screenshot.png"));
+
+                            Intent shareIntent = new Intent();
+                            shareIntent.setAction(Intent.ACTION_SEND);
+                            shareIntent.setType("image/*");    // 고정
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                            startActivity(Intent.createChooser(shareIntent, "Sharing"));
 
                             isSketchFinished = true;
                             brushViewLinearLayout.setVisibility(View.INVISIBLE);
@@ -410,78 +423,37 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // 터치 ON/OFF & 키보드로 그리기
+    // 터치 ON/OFF
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_A: // 키보드 A
-            case KeyEvent.KEYCODE_BACK: // 트랙볼 왼쪽 뒤로 가기
-                isTouchMode ^= true;
-                if (isTouchMode) {
-                    downTime = SystemClock.uptimeMillis();
-                    eventTime = SystemClock.uptimeMillis();
-                    MotionEvent downMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_DOWN, touchX, touchY, 0);
-                    if (mode == PEN_MODE || mode == ERASER_MODE) {
-                        if (isSketchFinished) {
-                            coloringView.dispatchTouchEvent(downMotionEvent);
-                        } else {
-                            sketchingView.dispatchTouchEvent(downMotionEvent);
-                        }
+        if (keyCode == KeyEvent.KEYCODE_BACK) { // 트랙볼 왼쪽 뒤로 가기
+            isTouchMode ^= true;
+            if (isTouchMode) {
+                downTime = SystemClock.uptimeMillis();
+                eventTime = SystemClock.uptimeMillis();
+                MotionEvent downMotionEvent = MotionEvent.obtain(downTime, eventTime + 1000, MotionEvent.ACTION_DOWN, touchX, touchY, 0);
+                if (mode == PEN_MODE || mode == ERASER_MODE) {
+                    if (isSketchFinished) {
+                        coloringView.dispatchTouchEvent(downMotionEvent);
+                    } else {
+                        sketchingView.dispatchTouchEvent(downMotionEvent);
                     }
-                    else if (mode == CURSOR_MODE) {
-                        cursorView.dispatchTouchEvent(downMotionEvent);
-                    }
+                } else if (mode == CURSOR_MODE) {
+                    cursorView.dispatchTouchEvent(downMotionEvent);
                 }
-                else {
-                    MotionEvent upMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_UP, touchX, touchY, 0);
-                    if (mode == PEN_MODE || mode == ERASER_MODE) {
-                        if (isSketchFinished) {
-                            coloringView.dispatchTouchEvent(upMotionEvent);
-                        } else {
-                            sketchingView.dispatchTouchEvent(upMotionEvent);
-                        }
+            } else {
+                MotionEvent upMotionEvent = MotionEvent.obtain(downTime, eventTime + 1000, MotionEvent.ACTION_UP, touchX, touchY, 0);
+                if (mode == PEN_MODE || mode == ERASER_MODE) {
+                    if (isSketchFinished) {
+                        coloringView.dispatchTouchEvent(upMotionEvent);
+                    } else {
+                        sketchingView.dispatchTouchEvent(upMotionEvent);
                     }
-                    else if (mode == CURSOR_MODE) {
-                        cursorView.dispatchTouchEvent(upMotionEvent);
-                    }
+                } else if (mode == CURSOR_MODE) {
+                    cursorView.dispatchTouchEvent(upMotionEvent);
                 }
-                return true;
-            case KeyEvent.KEYCODE_DPAD_UP:
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                if (isTouchMode) {
-                    keyboardTouchMove(keyCode);
-                }
-                return true;
+            }
         }
         return false;
-    }
-
-    // 키보드 터치 이벤트
-    protected void keyboardTouchMove(int keyCode) {
-        downTime = SystemClock.uptimeMillis();
-        eventTime = SystemClock.uptimeMillis();
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_UP:
-                touchY -= 5;
-                break;
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                touchY += 5;
-                break;
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-                touchX -= 5;
-                break;
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                touchX += 5;
-                break;
-        }
-        MotionEvent moveMotionEvent = MotionEvent.obtain(downTime, eventTime+1000, MotionEvent.ACTION_MOVE, touchX, touchY, 0);
-        if (isSketchFinished) {
-            coloringView.dispatchTouchEvent(moveMotionEvent);
-        }
-        else {
-            sketchingView.dispatchTouchEvent(moveMotionEvent);
-        }
     }
 
     // 버튼 모드 표시
@@ -521,8 +493,8 @@ public class MainActivity extends AppCompatActivity {
                 neighborImageView2.setImageBitmap(null);
                 neighborImageView3.setImageBitmap(null);
                 neighborImageView4.setImageBitmap(null);
-                Bitmap croppedScreenshot = invertBmp(getCroppedScreenshot(sketchLayout));
-                File croppedScreenshotFile = BitmapConvertFile(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
+                Bitmap croppedScreenshot = getCroppedScreenshot(sketchLayout);
+                File croppedScreenshotFile = Bmp2File(croppedScreenshot, String.valueOf(getFilesDir()) + "file.bin");
                 SendData2Server(croppedScreenshotFile);
                 stickerView.bringToFront();
                 imageViewLinearLayout.bringToFront();
@@ -609,35 +581,6 @@ public class MainActivity extends AppCompatActivity {
         return bitmap;
     }
 
-    // 흑백반전
-    private Bitmap invertBmp(final Bitmap originBmp){
-        int width, height;
-        width = originBmp.getWidth();
-        height = originBmp.getHeight();
-
-        Bitmap newBmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-        int A, R, G, B;
-        int pixel;
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                pixel = originBmp.getPixel(x, y);
-                A = Color.alpha(pixel);
-                R = Color.red(pixel);
-                G = Color.green(pixel);
-                B = Color.blue(pixel);
-                int gray = (int) (0.2989 * R + 0.5870 * G + 0.1140 * B);
-                if (gray > 128)
-                    gray = 0;
-                else
-                    gray = 255;
-                newBmp.setPixel(x, y, Color.argb(A, gray, gray, gray));
-            }
-        }
-        return newBmp;
-    }
-
     // 색상 선택
     protected void openColorPicker() {
         final ColorPicker colorPicker = new ColorPicker(this);
@@ -674,7 +617,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 비트맵 -> 파일
-    public File BitmapConvertFile(Bitmap bitmap, String strFilePath) {
+    public File Bmp2File(Bitmap bitmap, String strFilePath) {
         File file = new File(getFilesDir(), "file.bin") ;
         OutputStream out = null;
         try {
@@ -750,10 +693,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void writeFile() {
+        String fileTitle = "title.txt";
+        File file = new File(Environment.getExternalStorageDirectory(), fileTitle);
+
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter writer = new FileWriter(file, false);
+            String str = "      저장할 내용      ";
+            writer.write(str);
+            writer.close();
+        } catch (IOException e) {
+
+        }
+    }
+
     // txt 파일 내부 저장소 저장
     public void saveTextFile(String filename){
         try {
-            FileOutputStream fos = new FileOutputStream(filePath+"/"+filename, false);
+            FileOutputStream fos = new FileOutputStream(internalFilePath +"/"+filename, false);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos));
             writer.write(coloringView.getColors().toString());
             writer.write("\n");
