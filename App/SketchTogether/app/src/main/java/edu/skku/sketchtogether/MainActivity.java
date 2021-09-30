@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewsById();
 
-        OpenBTSocket();
+        // OpenBTSocket();
         File internalFileDir = getFilesDir();
         internalFilePath = internalFileDir.getPath();
 
