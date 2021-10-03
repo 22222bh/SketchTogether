@@ -93,14 +93,12 @@ public class MainActivity extends AppCompatActivity {
     List<String> pairedDevicesList;
     BluetoothDevice bluetoothDevice;
     BluetoothSocket bluetoothSocket;
-    private static final UUID bluetoothUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     long downTime;
     long eventTime;
     float touchX = 0.0f;
     float touchY = 0.0f;
 
-    private static final float PEN_BRUSH_SIZE = 10;
     private static final float SMALL_ERASER_BRUSH_SIZE = 20;
     private static final float MEDIUM_ERASER_BRUSH_SIZE = 60;
     private static final float LARGE_ERASER_BRUSH_SIZE = 100;
@@ -169,16 +167,30 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int id) {
                         if (isSketchFinished) {
                             saveTextFile(textFileName);
+                            Uri uri = FileProvider.getUriForFile(context, "edu.skku.sketchtogether.fileprovider",new File(context.getFilesDir(), textFileName));
+                            Intent shareIntent = new Intent();
+                            shareIntent.setAction(Intent.ACTION_SEND);
+                            shareIntent.setType("text/*");    // 고정
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                            startActivity(Intent.createChooser(shareIntent, "Sharing"));
+
+                            sketchingView.eraseAll();
+                            coloringView.eraseAll();
+                            isSketchFinished = false;
+                            penButton.setVisibility(View.VISIBLE);
+                            eraserButton.setVisibility(View.VISIBLE);
+                            cursorButton.setVisibility(View.VISIBLE);
+                            suggestButton.setVisibility(View.VISIBLE);
+                            colorButton.setVisibility(View.GONE);
+                            sketchingView.bringToFront();
+                            sketchingView.setPenMode();
 
                             Toast.makeText(getApplicationContext(), "채색이 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
                         else {
                             sketchScreenshot = getScreenshot(sketchingView);
                             saveImage(context, screenshotFileName, sketchScreenshot);
-                            File sketchScreenShotFile = Bmp2File(sketchScreenshot, String.valueOf(getFilesDir()) + "sketch.bin");
-                            SendData2Server(sketchScreenShotFile);
-                            Uri uri = FileProvider.getUriForFile(context, "edu.skku.sketchtogether.fileprovider",new File(context.getFilesDir(), "screenshot.png"));
-
+                            Uri uri = FileProvider.getUriForFile(context, "edu.skku.sketchtogether.fileprovider",new File(context.getFilesDir(), screenshotFileName));
                             Intent shareIntent = new Intent();
                             shareIntent.setAction(Intent.ACTION_SEND);
                             shareIntent.setType("image/*");    // 고정
@@ -195,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                             colorButton.setVisibility(View.VISIBLE);
                             coloringView.setVisibility(View.VISIBLE);
                             coloringView.bringToFront();
-                            coloringView.setPenBrushSize(PEN_BRUSH_SIZE);
+                            coloringView.setPenBrushSize(20);
                             coloringView.setPenMode();
                             Toast.makeText(getApplicationContext(), "스케치가 완료되었습니다.", Toast.LENGTH_SHORT).show();
                         }
@@ -494,7 +506,6 @@ public class MainActivity extends AppCompatActivity {
                 SendData2Server(croppedScreenshotFile);
                 stickerView.bringToFront();
                 imageViewLinearLayout.bringToFront();
-                neighborImageView1.setImageBitmap(croppedScreenshot);
                 break;
             default:
                 brushViewLinearLayout.setVisibility(View.INVISIBLE);
@@ -511,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
         Canvas canvas = new Canvas(bitmap);
 
         Paint drawPaint = coloringView.getDrawPaint();
-        drawPaint.setColor(ContextCompat.getColor(context, R.color.dark_gray));
+        drawPaint.setColor(ContextCompat.getColor(context, R.color.black));
         drawPaint.setStrokeWidth(size);
         canvas.drawLine(width / 4, height / 2, width * 3 / 4, height / 2, drawPaint);
         view.setImageBitmap(bitmap);
@@ -637,7 +648,7 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         Request request = new Request.Builder()
-                .url("http://blee.iptime.org:22222/model")
+                .url("http://10.221.71.95:4567/model")
                 .post(requestBody)
                 .build();
 
@@ -688,6 +699,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
     // txt 파일 내부 저장소 저장
     public void saveTextFile(String filename){

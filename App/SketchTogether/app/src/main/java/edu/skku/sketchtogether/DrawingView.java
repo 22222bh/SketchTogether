@@ -47,7 +47,7 @@ public class DrawingView extends View {
         drawPath = new Path();
         drawPaint = new Paint();
         canvasPaint = new Paint(Paint.DITHER_FLAG);
-
+        canvasPaint.setColor(Color.WHITE);
         drawPaint.setColor(Color.BLACK);
         drawPaint.setStrokeWidth(penBrushSize);
         drawPaint.setAntiAlias(true);
