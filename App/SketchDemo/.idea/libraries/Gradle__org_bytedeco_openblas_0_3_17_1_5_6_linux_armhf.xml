@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Gradle: org.bytedeco:openblas:0.3.17-1.5.6:linux-armhf">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../../../Code/AndroidStudioProjects/gradle-6.5/caches/modules-2/files-2.1/org.bytedeco/openblas/0.3.17-1.5.6/5b9f74e9489504f0ef8e292eee90862f91ea0ce0/openblas-0.3.17-1.5.6-linux-armhf.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Gradle: org.bytedeco:javacpp:1.5.6:linux-x86_64">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../../../Code/AndroidStudioProjects/gradle-6.5/caches/modules-2/files-2.1/org.bytedeco/javacpp/1.5.6/f04727c53f837f7fd2b3392d63aed02d7b1deec/javacpp-1.5.6-linux-x86_64.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
