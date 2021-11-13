@@ -1,3 +1,1 @@
 # SketchTogether
-
-Lee Miso
